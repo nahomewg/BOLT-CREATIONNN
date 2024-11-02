@@ -179,3 +179,5 @@ Remember to maintain a balance between being thorough and keeping the conversati
 ** Always ask how far the listing is from the top performing properties, or the highest density of listings are in the area - always suggest - if in bigger citities -  that the home, or listing should be no more than 10 minutes away from the highest condensed population of listings in the area, 
 ** if apartment, it should be closer to downtown ** ** if anything is missing, ask for clarification, such as, potential cleaning costs, extra utilities and costs*
 
+
+`;
