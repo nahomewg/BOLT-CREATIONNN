@@ -1,67 +1,111 @@
-import Link from 'next/link';
-import { Card } from 'components/card';
-import { RandomQuote } from 'components/random-quote';
-import { Markdown } from 'components/markdown';
-import { ContextAlert } from 'components/context-alert';
-import { getNetlifyContext } from 'utils';
+import { useState, useEffect } from 'react';
 
-const cards = [
-    //{ text: 'Hello', linkText: 'someLink', href: '/' }
-];
+const Page = () => {
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-const contextExplainer = `
-The card below is rendered on the server based on the value of \`process.env.CONTEXT\` 
-([docs](https://docs.netlify.com/configure-builds/environment-variables/#build-metadata)):
-`;
+  // Custom theme colors
+  const theme = {
+    rusticOrange: '#D35400',
+    darkBlue: '#154360',
+  };
 
-const preDynamicContentExplainer = `
-The card content below is fetched by the client-side from \`/quotes/random\` (see file \`app/quotes/random/route.js\`) with a different quote shown on each page load:
-`;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim()) return;
 
-const postDynamicContentExplainer = `
-On Netlify, Next.js Route Handlers are automatically deployed as [Serverless Functions](https://docs.netlify.com/functions/overview/).
-Alternatively, you can add Serverless Functions to any site regardless of framework, with acccess to the [full context data](https://docs.netlify.com/functions/api/).
+    // Add user message
+    const userMessage = { role: 'user', content: inputMessage };
+    setMessages([...messages, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
 
-And as always with dynamic content, beware of layout shifts & flicker! (here, we aren't...)
-`;
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+          'x-api-key': process.env.VITE_ANTHROPIC_API_KEY,
+        },
+        body: JSON.stringify({
+          model: 'claude-3-sonnet-20240229',
+          max_tokens: 1024,
+          messages: [...messages, userMessage],
+          system: "Your custom instructions here" // Replace with your actual instructions
+        }),
+      });
 
-const ctx = getNetlifyContext();
-
-export default function Page() {
-    return (
-        <main className="flex flex-col gap-8 sm:gap-16">
-            <section className="flex flex-col items-start gap-3 sm:gap-4">
-                <ContextAlert />
-                <h1 className="mb-0">Netlify Platform Starter - Next.js</h1>
-                <p className="text-lg">Get started with Next.js and Netlify in seconds.</p>
-                <Link
-                    href="https://docs.netlify.com/frameworks/next-js/overview/"
-                    className="btn btn-lg btn-primary sm:btn-wide"
-                >
-                    Read the Docs
-                </Link>
-            </section>
-            {!!ctx && (
-                <section className="flex flex-col gap-4">
-                    <Markdown content={contextExplainer} />
-                    <RuntimeContextCard />
-                </section>
-            )}
-            <section className="flex flex-col gap-4">
-                <Markdown content={preDynamicContentExplainer} />
-                <RandomQuote />
-                <Markdown content={postDynamicContentExplainer} />
-            </section>
-            {/* !!cards?.length && <CardsGrid cards={cards} /> */}
-        </main>
-    );
-}
-
-function RuntimeContextCard() {
-    const title = `Netlify Context: running in ${ctx} mode.`;
-    if (ctx === 'dev') {
-        return <Card title={title} text="Next.js will rebuild any page you navigate to, including static pages." />;
-    } else {
-        return <Card title={title} text="This page was statically-generated at build time." />;
+      const data = await response.json();
+      setMessages(prev => [...prev, { role: 'assistant', content: data.content[0].text }]);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error.' }]);
     }
-}
+
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Header */}
+          <div style={{ backgroundColor: theme.darkBlue }} className="p-4">
+            <h1 className="text-2xl font-bold text-white">Chat with Claude</h1>
+          </div>
+
+          {/* Chat messages */}
+          <div className="h-[600px] overflow-y-auto p-4 space-y-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  style={{
+                    backgroundColor: message.role === 'user' ? theme.rusticOrange : theme.darkBlue,
+                  }}
+                  className="max-w-[80%] rounded-lg p-3 text-white"
+                >
+                  {message.content}
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div style={{ backgroundColor: theme.darkBlue }} className="max-w-[80%] rounded-lg p-3 text-white">
+                  Thinking...
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Input form */}
+          <form onSubmit={handleSubmit} className="p-4 border-t">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 p-2 border rounded-lg focus:outline-none focus:border-blue-500"
+              />
+              <button
+                type="submit"
+                style={{ backgroundColor: theme.rusticOrange }}
+                className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition"
+                disabled={isLoading}
+              >
+                Send
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Page;
