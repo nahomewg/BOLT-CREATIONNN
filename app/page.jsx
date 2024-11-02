@@ -1,3 +1,4 @@
+import { systemPrompt } from './config';
 import { useState, useEffect } from 'react';
 
 const Page = () => {
@@ -33,6 +34,7 @@ const Page = () => {
           model: 'claude-3-sonnet-20240229',
           max_tokens: 1024,
           messages: [...messages, userMessage],
+          system: systemPrompt,
           system: "Your custom instructions here" // Replace with your actual instructions
         }),
       });
@@ -109,3 +111,4 @@ const Page = () => {
 };
 
 export default Page;
+
