@@ -1,10 +1,19 @@
-// Move this to: app/api/chat/route.js
+// app/api/chat/route.js
 import { NextResponse } from 'next/server';
 
-export async function POST(request) {  // Changed 'req' to 'request' to match Next.js convention
+export const runtime = 'edge'; // Add this line
+
+export async function POST(request) {
   try {
     const { messages } = await request.json();
     
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json(
+        { error: 'API key not configured' },
+        { status: 500 }
+      );
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -14,13 +23,17 @@ export async function POST(request) {  // Changed 'req' to 'request' to match Ne
       },
       body: JSON.stringify({
         model: 'claude-3-sonnet-20240229',
-        messages: messages,
+        messages,
         max_tokens: 1024
       })
     });
 
     if (!response.ok) {
-      throw new Error('Anthropic API error');
+      const error = await response.json();
+      return NextResponse.json(
+        { error: 'Anthropic API error', details: error },
+        { status: response.status }
+      );
     }
 
     const data = await response.json();
