@@ -7,6 +7,7 @@
 
 [functions]
   external_node_modules = ["@anthropic-ai/sdk"]
+  node_bundler = "esbuild"
 
 [build.environment]
   NEXT_USE_NETLIFY_EDGE = "true"
@@ -15,3 +16,6 @@
 [[edge_functions]]
   path = "/api/*"
   function = "api"
+
+[dev]
+  framework = "next"
