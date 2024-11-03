@@ -1,44 +1,65 @@
 import { NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
+// Ensure edge runtime is explicitly set
 export const runtime = 'edge';
 
-export async function POST(request) {
-  try {
-    const body = await request.json();
-    const messages = body.messages || [];
+if (!process.env.ANTHROPIC_API_KEY) {
+  throw new Error('ANTHROPIC_API_KEY is not set');
+}
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      console.error('API key not configured');
-      return NextResponse.json({ error: 'API configuration error' }, { status: 500 });
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+export async function POST(req) {
+  console.log('[API] Request received');
+  
+  try {
+    const body = await req.json();
+    console.log('[API] Request body parsed:', JSON.stringify(body));
+
+    if (!body.messages || !Array.isArray(body.messages)) {
+      console.error('[API] Invalid request: missing messages array');
+      return new NextResponse(
+        JSON.stringify({ error: 'Invalid request format' }), 
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    console.log('Sending messages to Claude:', messages); // Debug log
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
-        messages: messages.map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }))
-      })
+    const response = await anthropic.messages.create({
+      model: 'claude-3-sonnet-20240229',
+      max_tokens: 4096,
+      messages: body.messages,
     });
 
-    if (!response.ok) {
-      console.error('Claude API error:', response.status);
-      return NextResponse.json({ error: 'API response error' }, { status: response.status });
-    }
+    console.log('[API] Anthropic response received');
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    return new NextResponse(
+      JSON.stringify({
+        message: response.content[0].text,
+        role: 'assistant'
+      }),
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+
   } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('[API] Error:', error);
+    
+    return new NextResponse(
+      JSON.stringify({ 
+        error: error.message || 'Internal server error'
+      }),
+      { 
+        status: error.status || 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   }
 }
