@@ -14,7 +14,8 @@ export default function Home() {
       setMessages(prev => [...prev, newMessage]);
       setInputMessage('');
 
-      const response = await fetch('/api/chat', {
+      // Updated API endpoint path
+      const response = await fetch('/api/chat/route', {  // Changed this line
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,6 +49,7 @@ export default function Home() {
   return (
     <main className="container mx-auto p-4">
       <div className="flex flex-col h-screen">
+        <h1 className="text-2xl font-bold mb-4">Chat with Claude</h1>
         <div className="flex-1 overflow-y-auto space-y-4">
           {messages.map((msg, i) => (
             <div
