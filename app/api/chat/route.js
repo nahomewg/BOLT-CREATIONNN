@@ -1,18 +1,18 @@
-// app/api/chat/route.js
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge'; // Add this line
+export const runtime = 'edge';
 
 export async function POST(request) {
   try {
-    const { messages } = await request.json();
-    
+    const body = await request.json();
+    const messages = body.messages || [];
+
     if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json(
-        { error: 'API key not configured' },
-        { status: 500 }
-      );
+      console.error('API key not configured');
+      return NextResponse.json({ error: 'API configuration error' }, { status: 500 });
     }
+
+    console.log('Sending messages to Claude:', messages); // Debug log
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -23,26 +23,22 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         model: 'claude-3-sonnet-20240229',
-        messages,
-        max_tokens: 1024
+        messages: messages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
       })
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      return NextResponse.json(
-        { error: 'Anthropic API error', details: error },
-        { status: response.status }
-      );
+      console.error('Claude API error:', response.status);
+      return NextResponse.json({ error: 'API response error' }, { status: response.status });
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('API Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to get response from Claude' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
