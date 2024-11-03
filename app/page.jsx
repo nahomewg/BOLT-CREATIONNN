@@ -16,8 +16,7 @@ export default function Home() {
       setMessages(prev => [...prev, newMessage]);
       setInputMessage('');
 
-      // Updated API endpoint path to match the route.js location
-      const response = await fetch('/api/chat/route', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
