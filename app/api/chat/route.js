@@ -1,8 +1,9 @@
+// Move this to: app/api/chat/route.js
 import { NextResponse } from 'next/server';
 
-export async function POST(req) {
+export async function POST(request) {  // Changed 'req' to 'request' to match Next.js convention
   try {
-    const { messages } = await req.json();
+    const { messages } = await request.json();
     
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -17,6 +18,10 @@ export async function POST(req) {
         max_tokens: 1024
       })
     });
+
+    if (!response.ok) {
+      throw new Error('Anthropic API error');
+    }
 
     const data = await response.json();
     return NextResponse.json(data);
