@@ -13,10 +13,12 @@ export default function Home() {
     try {
       setIsLoading(true);
       const newMessage = { role: 'user', content: inputMessage };
+      
       setMessages(prev => [...prev, newMessage]);
       setInputMessage('');
 
-      // Updated fetch call with better error handling and headers
+      console.log('Sending request with messages:', [...messages, newMessage]);
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -24,33 +26,32 @@ export default function Home() {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          messages: [...messages, newMessage].map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
+          messages: [...messages, newMessage]
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to get response');
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Received non-JSON response from server');
       }
 
       const data = await response.json();
-      
-      if (data.content) {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: data.content
-        }]);
-      } else {
-        throw new Error('Invalid response format');
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get response');
       }
+
+      const assistantMessage = {
+        role: 'assistant',
+        content: data.content?.text || data.content || 'No response content'
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Error: ${error.message || 'Something went wrong. Please try again.'}`
+        content: `Error: ${error.message}`
       }]);
     } finally {
       setIsLoading(false);
@@ -79,7 +80,7 @@ export default function Home() {
           ))}
           {isLoading && (
             <div className="flex items-center justify-center p-4">
-              <div className="animate-pulse text-gray-500">Claude is typing...</div>
+              <div className="animate-pulse text-gray-500">Claude is thinking...</div>
             </div>
           )}
         </div>
