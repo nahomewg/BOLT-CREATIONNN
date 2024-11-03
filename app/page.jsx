@@ -1,106 +1,77 @@
 'use client';
 import { useState } from 'react';
-import { systemPrompt } from './config';
 
-export default function Page() {
+export default function Home() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const theme = {
-    rusticOrange: '#D35400',
-    darkBlue: '#154360',
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
-    const userMessage = { role: 'user', content: inputMessage };
-    setMessages([...messages, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
-
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const newMessage = { role: 'user', content: inputMessage };
+      setMessages(prev => [...prev, newMessage]);
+      setInputMessage('');
+
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01',
-          'x-api-key': process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY,
         },
         body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
-          max_tokens: 1024,
-          messages: [...messages, userMessage],
-          system: systemPrompt,
-        }),
+          messages: [...messages, newMessage]
+        })
       });
 
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.content[0].text }]);
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error.' }]);
-    }
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
 
-    setIsLoading(false);
+      const data = await response.json();
+      
+      if (data.content) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: data.content
+        }]);
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error.'
+      }]);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div style={{ backgroundColor: theme.darkBlue }} className="p-4">
-            <h1 className="text-2xl font-bold text-white">Chat with Claude</h1>
-          </div>
-
-          <div className="h-[600px] overflow-y-auto p-4 space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  style={{
-                    backgroundColor: message.role === 'user' ? theme.rusticOrange : theme.darkBlue,
-                  }}
-                  className="max-w-[80%] rounded-lg p-3 text-white"
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div style={{ backgroundColor: theme.darkBlue }} className="max-w-[80%] rounded-lg p-3 text-white">
-                  Thinking...
-                </div>
-              </div>
-            )}
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-4 border-t">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1 p-2 border rounded-lg focus:outline-none focus:border-blue-500"
-              />
-              <button
-                type="submit"
-                style={{ backgroundColor: theme.rusticOrange }}
-                className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition"
-                disabled={isLoading}
-              >
-                Send
-              </button>
+    <main className="container mx-auto p-4">
+      <div className="flex flex-col h-screen">
+        <div className="flex-1 overflow-y-auto space-y-4">
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`p-4 rounded-lg ${
+                msg.role === 'user' 
+                  ? 'bg-blue-100 ml-auto max-w-[80%]' 
+                  : 'bg-gray-100 max-w-[80%]'
+              }`}
+            >
+              {msg.content}
             </div>
-          </form>
+          ))}
         </div>
+        <form onSubmit={handleSubmit} className="mt-4">
+          <input
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            className="w-full p-2 border rounded"
+            placeholder="Type your message..."
+          />
+        </form>
       </div>
-    </div>
+    </main>
   );
 }
