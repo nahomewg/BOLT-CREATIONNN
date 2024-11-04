@@ -27,7 +27,7 @@ export async function POST(request) {
 
     // Create chat completion
     const completion = await anthropic.messages.create({
-      model: "claude-3-opus-20240229",
+     model: "claude-3-opus-20240229-v1:0",
       max_tokens: 1024,
       messages: [
         {
@@ -40,7 +40,7 @@ export async function POST(request) {
     // Return the response
     return new Response(
       JSON.stringify({ 
-        response: completion.content[0].text
+        message: completion.content[0].text
       }), 
       {
         status: 200,
