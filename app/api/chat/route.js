@@ -1,71 +1,68 @@
-// app/api/chat/route.js
-import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { Anthropic } from '@anthropic-ai/sdk';
 
-export const runtime = 'edge';
-
-if (!process.env.ANTHROPIC_API_KEY) {
-  throw new Error('ANTHROPIC_API_KEY is not set');
-}
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-export async function POST(req) {
+export async function POST(request) {
   try {
-    console.log('[API] Request received');
-    
-    const body = await req.json();
-    console.log('[API] Request body:', JSON.stringify(body));
+    // Validate environment variable
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'ANTHROPIC_API_KEY is not configured' }), 
+        { status: 500 }
+      );
+    }
 
-    if (!body.messages || !Array.isArray(body.messages)) {
-      console.error('[API] Invalid request: missing messages array');
-      return NextResponse.json(
-        { error: 'Invalid request format' },
+    // Parse the incoming request body
+    const body = await request.json();
+    
+    if (!body.message) {
+      return new Response(
+        JSON.stringify({ error: 'Message is required' }), 
         { status: 400 }
       );
     }
 
-    const response = await anthropic.messages.create({
-      model: 'claude-3-sonnet-20240229',
-      max_tokens: 4096,
-      messages: body.messages,
-      stream: true,
+    // Initialize Anthropic client
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
-    // Create a readable stream for the client
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of response) {
-            if (chunk.type === 'message_delta') {
-              const text = chunk.delta?.text || '';
-              controller.enqueue(text);
-            }
-          }
-          controller.close();
-        } catch (error) {
-          console.error('[API] Stream error:', error);
-          controller.error(error);
+    // Create chat completion
+    const completion = await anthropic.messages.create({
+      model: "claude-3-opus-20240229",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: body.message
         }
-      },
+      ]
     });
 
-    // Return the stream with appropriate headers
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+    // Return the response
+    return new Response(
+      JSON.stringify({ 
+        response: completion.content[0].text
+      }), 
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
   } catch (error) {
-    console.error('[API] Error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: error.status || 500 }
+    console.error('Chat API Error:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: 'An error occurred while processing your request',
+        details: error.message 
+      }), 
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
   }
 }
