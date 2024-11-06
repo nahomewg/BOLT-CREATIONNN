@@ -5,7 +5,7 @@ export async function POST(request) {
     // Validate environment variable
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'ANTHROPIC_API_KEY is not configured' }), 
+        JSON.stringify({ error: 'ANTHROPIC_API_KEY is not configured' }),
         { status: 500 }
       );
     }
@@ -15,7 +15,7 @@ export async function POST(request) {
     
     if (!body.message) {
       return new Response(
-        JSON.stringify({ error: 'Message is required' }), 
+        JSON.stringify({ error: 'Message is required' }),
         { status: 400 }
       );
     }
@@ -27,7 +27,7 @@ export async function POST(request) {
 
     // Create chat completion
     const completion = await anthropic.messages.create({
-     model: "claude-3-sonnet-20240229-v1:0",
+      model: "claude-3-sonnet-20240229-v1:0",
       max_tokens: 1024,
       messages: [
         {
@@ -39,9 +39,9 @@ export async function POST(request) {
 
     // Return the response
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message: completion.content[0].text
-      }), 
+      }),
       {
         status: 200,
         headers: {
@@ -50,20 +50,21 @@ export async function POST(request) {
       }
     );
 
-} catch (error) {
-  console.error('Chat API Error:', error);
-  console.error('Detailed error:', error.response?.data || error.message);
-  return new Response(
-    JSON.stringify({
-      error: 'An error occurred while processing your request',
-      details: error.message,
-      fullError: error.response?.data || error.message
-    }),
-    {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+  } catch (error) {
+    console.error('Chat API Error:', error);
+    console.error('Detailed error:', error.response?.data || error.message);
+    return new Response(
+      JSON.stringify({
+        error: 'An error occurred while processing your request',
+        details: error.message,
+        fullError: error.response?.data || error.message
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  }
 }
