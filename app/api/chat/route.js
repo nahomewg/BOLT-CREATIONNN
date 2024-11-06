@@ -1,31 +1,34 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 
 export async function POST(request) {
+  console.log('CHECKPOINT 1: Route handler started');
   try {
-    // Validate environment variable
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: 'ANTHROPIC_API_KEY is not configured' }),
-        { status: 500 }
-      );
+    // STEP 1: API Key Check
+    console.log('CHECKPOINT 2: Checking API key...');
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    console.log('API Key exists:', !!apiKey);
+    if (!apiKey) {
+      throw new Error('No API key found');
     }
 
-    // Parse the incoming request body
+    // STEP 2: Request Body Parse
+    console.log('CHECKPOINT 3: Parsing request body...');
     const body = await request.json();
+    console.log('CHECKPOINT 4: Body parsed', { hasMessage: !!body.message });
     
     if (!body.message) {
-      return new Response(
-        JSON.stringify({ error: 'Message is required' }),
-        { status: 400 }
-      );
+      throw new Error('No message provided');
     }
 
-    // Initialize Anthropic client
+    // STEP 3: Anthropic Client Init
+    console.log('CHECKPOINT 5: Creating Anthropic client...');
     const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+      apiKey: apiKey,
     });
+    console.log('CHECKPOINT 6: Anthropic client created');
 
-    // Create chat completion
+    // STEP 4: Message Creation
+    console.log('CHECKPOINT 7: Sending message to Claude...');
     const completion = await anthropic.messages.create({
       model: "claude-3-sonnet-20240229-v1:0",
       max_tokens: 1024,
@@ -36,8 +39,10 @@ export async function POST(request) {
         }
       ]
     });
+    console.log('CHECKPOINT 8: Claude response received');
 
-    // Return the response
+    // STEP 5: Response Return
+    console.log('CHECKPOINT 9: Preparing response');
     return new Response(
       JSON.stringify({
         message: completion.content[0].text
@@ -51,13 +56,20 @@ export async function POST(request) {
     );
 
   } catch (error) {
-    console.error('Chat API Error:', error);
-    console.error('Detailed error:', error.response?.data || error.message);
+    console.error('ERROR OCCURRED AT LAST CHECKPOINT');
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      response: error.response?.data,
+      stack: error.stack
+    });
+
     return new Response(
       JSON.stringify({
-        error: 'An error occurred while processing your request',
-        details: error.message,
-        fullError: error.response?.data || error.message
+        error: 'Error occurred',
+        lastCheckpoint: 'Check console for last successful checkpoint',
+        errorDetails: error.message,
+        apiError: error.response?.data
       }),
       {
         status: 500,
