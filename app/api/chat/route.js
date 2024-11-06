@@ -1,7 +1,7 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 
 export async function POST(request) {
-  console.log('CHECKPOINT 1: Route handler started');
+  console.log('🚨 CHECKPOINT 1: Route handler started 🚨');
   try {
     // STEP 1: API Key Check
     console.log('CHECKPOINT 2: Checking API key...');
