@@ -50,19 +50,20 @@ export async function POST(request) {
       }
     );
 
-  } catch (error) {
-    console.error('Chat API Error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'An error occurred while processing your request',
-        details: error.message 
-      }), 
-      { 
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-  }
+} catch (error) {
+  console.error('Chat API Error:', error);
+  console.error('Detailed error:', error.response?.data || error.message);
+  return new Response(
+    JSON.stringify({
+      error: 'An error occurred while processing your request',
+      details: error.message,
+      fullError: error.response?.data || error.message
+    }),
+    {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
 }
