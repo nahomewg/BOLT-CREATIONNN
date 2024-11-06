@@ -1,34 +1,48 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 
 export async function POST(request) {
-  console.log('🚨 CHECKPOINT 1: Route handler started 🚨');
   try {
-    // STEP 1: API Key Check
-    console.log('CHECKPOINT 2: Checking API key...');
+    // Validate environment variable
     const apiKey = process.env.ANTHROPIC_API_KEY;
     console.log('API Key exists:', !!apiKey);
+    
     if (!apiKey) {
-      throw new Error('No API key found');
+      return new Response(
+        JSON.stringify({ 
+          error: 'ANTHROPIC_API_KEY is not configured',
+          debug: {
+            keyExists: false
+          }
+        }),
+        { status: 500 }
+      );
     }
 
-    // STEP 2: Request Body Parse
-    console.log('CHECKPOINT 3: Parsing request body...');
+    // Parse the incoming request body
     const body = await request.json();
-    console.log('CHECKPOINT 4: Body parsed', { hasMessage: !!body.message });
+    console.log('Request body received:', !!body);
     
     if (!body.message) {
-      throw new Error('No message provided');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Message is required',
+          debug: {
+            bodyReceived: !!body,
+            hasMessage: false
+          }
+        }),
+        { status: 400 }
+      );
     }
 
-    // STEP 3: Anthropic Client Init
-    console.log('CHECKPOINT 5: Creating Anthropic client...');
+    // Initialize Anthropic client
     const anthropic = new Anthropic({
       apiKey: apiKey,
     });
-    console.log('CHECKPOINT 6: Anthropic client created');
 
-    // STEP 4: Message Creation
-    console.log('CHECKPOINT 7: Sending message to Claude...');
+    console.log('Attempting Claude request...');
+    
+    // Create chat completion
     const completion = await anthropic.messages.create({
       model: "claude-3-sonnet-20240229-v1:0",
       max_tokens: 1024,
@@ -39,10 +53,10 @@ export async function POST(request) {
         }
       ]
     });
-    console.log('CHECKPOINT 8: Claude response received');
 
-    // STEP 5: Response Return
-    console.log('CHECKPOINT 9: Preparing response');
+    console.log('Claude response received');
+
+    // Return the response
     return new Response(
       JSON.stringify({
         message: completion.content[0].text
@@ -56,27 +70,31 @@ export async function POST(request) {
     );
 
   } catch (error) {
-    console.error('ERROR OCCURRED AT LAST CHECKPOINT');
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      response: error.response?.data,
-      stack: error.stack
-    });
+    // Detailed error logging
+    const debugInfo = {
+        errorType: error.name,
+        errorMessage: error.message,
+        apiKeyExists: !!process.env.ANTHROPIC_API_KEY,
+        apiKeyFirstChars: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.slice(0,4) + '...' : 'none',
+        requestReceived: !!body,
+        requestMessage: body?.message,
+        anthropicError: error.response?.data,
+        fullError: error.toString()
+    };
+
+    console.error('Debug Info:', debugInfo);
 
     return new Response(
-      JSON.stringify({
-        error: 'Error occurred',
-        lastCheckpoint: 'Check console for last successful checkpoint',
-        errorDetails: error.message,
-        apiError: error.response?.data
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+        JSON.stringify({
+            error: 'API Debug Info',
+            debug: debugInfo
+        }),
+        {
+            status: 500,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }
     );
   }
 }
