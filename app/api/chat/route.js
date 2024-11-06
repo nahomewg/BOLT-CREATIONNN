@@ -1,5 +1,5 @@
 import { Anthropic } from '@anthropic-ai/sdk';
-
+import {systemPrompt} from '../../config.js'
 export async function POST(request) {
   console.log('API route started');
   try {
@@ -42,7 +42,7 @@ export async function POST(request) {
       messages: [
         {
           role: "user",
-          content: body.message
+          content: systemPrompt+ body.message
         }
       ]
     });
