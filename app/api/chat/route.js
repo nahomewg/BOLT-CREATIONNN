@@ -37,7 +37,7 @@ export async function POST(request) {
     // Log message creation attempt
     console.log('Attempting to create message...');
     const completion = await anthropic.messages.create({
-      model: "claude-3-sonnet-20240229-v1:0",
+      model: 'claude-3-opus-20240229',
       max_tokens: 1024,
       messages: [
         {
