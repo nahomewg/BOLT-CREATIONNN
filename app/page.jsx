@@ -12,6 +12,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentChatId, setCurrentChatId] = useState(null);
+  const [chats, setChats] = useState([]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -32,6 +33,15 @@ export default function ChatPage() {
   useEffect(() => {
     if (session?.user && !currentChatId) {
       startNewChat();
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetch('/api/chats')
+        .then(res => res.json())
+        .then(data => setChats(data))
+        .catch(err => console.error('Error loading chats:', err));
     }
   }, [session]);
 
@@ -116,55 +126,76 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Chat with Claude</h1>
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-800 text-white p-4 flex flex-col">
         <button
           onClick={startNewChat}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          className="w-full px-4 py-2 mb-4 bg-green-500 text-white rounded hover:bg-green-600"
         >
           New Chat
         </button>
-      </div>
-
-      <div className="bg-white rounded-lg shadow mb-4 p-4 min-h-[400px] max-h-[600px] overflow-y-auto">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`mb-4 p-3 rounded-lg ${message.role === 'user'
-              ? 'bg-blue-100 ml-8'
-              : 'bg-gray-100 mr-8'
+        
+        <div className="flex-1 overflow-y-auto">
+          {chats.map((chat) => (
+            <div
+              key={chat.id}
+              onClick={() => {
+                setCurrentChatId(chat.id);
+                setMessages([]);
+              }}
+              className={`p-2 mb-2 rounded cursor-pointer hover:bg-gray-700 ${
+                currentChatId === chat.id ? 'bg-gray-700' : ''
               }`}
-          >
-            <div className="font-semibold mb-1">
-              {message.role === 'user' ? 'You' : 'Claude'}
+            >
+              {chat.title}
             </div>
-            <div className="whitespace-pre-wrap">{message.content}</div>
-          </div>
-        ))}
-
-        {isLoading && (
-          <div className="text-gray-500 italic">Claude is thinking...</div>
-        )}
+          ))}
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          placeholder="Type your message..."
-          className="flex-1 p-2 border rounded"
-          disabled={isLoading}
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !inputMessage.trim()}
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-        >
-          Send
-        </button>
-      </form>
+      {/* Main chat area */}
+      <div className="flex-1 flex flex-col p-4">
+        <div className="flex-1 bg-white rounded-lg shadow mb-4 p-4 overflow-y-auto">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`mb-4 p-3 rounded-lg ${
+                message.role === 'user'
+                  ? 'bg-blue-100 ml-8'
+                  : 'bg-gray-100 mr-8'
+              }`}
+            >
+              <div className="font-semibold mb-1">
+                {message.role === 'user' ? 'You' : 'Claude'}
+              </div>
+              <div className="whitespace-pre-wrap">{message.content}</div>
+            </div>
+          ))}
+
+          {isLoading && (
+            <div className="text-gray-500 italic">Claude is thinking...</div>
+          )}
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            placeholder="Type your message..."
+            className="flex-1 p-2 border rounded"
+            disabled={isLoading}
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !inputMessage.trim()}
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+          >
+            Send
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
