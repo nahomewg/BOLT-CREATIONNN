@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function ChatPage() {
   const { data: session, status } = useSession();
@@ -13,6 +13,8 @@ export default function ChatPage() {
   const [error, setError] = useState(null);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [chats, setChats] = useState([]);
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -73,7 +75,7 @@ export default function ChatPage() {
       }
 
       const data = await response.json();
-
+      
       if (data.error) {
         throw new Error(data.error);
       }
@@ -82,6 +84,11 @@ export default function ChatPage() {
         role: 'assistant',
         content: data.message
       }]);
+
+      // Refresh the chat list after successful message
+      const chatsResponse = await fetch('/api/chats');
+      const chatsData = await chatsResponse.json();
+      setChats(chatsData);
 
     } catch (err) {
       console.error('Chat error:', err);
@@ -117,6 +124,108 @@ export default function ChatPage() {
     }
   };
 
+  const handleRename = async (chatId) => {
+    try {
+      const response = await fetch(`/api/chats/${chatId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editingTitle })
+      });
+
+      if (!response.ok) throw new Error('Failed to rename chat');
+
+      // Update chats list
+      setChats(chats.map(chat => 
+        chat.id === chatId ? { ...chat, title: editingTitle } : chat
+      ));
+      setEditingChatId(null);
+    } catch (error) {
+      console.error('Error renaming chat:', error);
+    }
+  };
+
+  const handleDelete = async (chatId) => {
+    try {
+      const response = await fetch(`/api/chats/${chatId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('Failed to delete chat');
+
+      setChats(chats.filter(chat => chat.id !== chatId));
+      if (currentChatId === chatId) {
+        startNewChat();
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
+  const ChatItem = ({ chat, currentChatId, onSelect, onRename, onDelete }) => {
+    const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (menuRef.current && !menuRef.current.contains(event.target)) {
+          setShowMenu(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+      <div className="group relative flex items-center pr-8">
+        <div
+          onClick={onSelect}
+          onDoubleClick={() => onRename(chat)}
+          className={`flex-1 p-2 rounded cursor-pointer hover:bg-gray-700 ${
+            currentChatId === chat.id ? 'bg-gray-700' : ''
+          }`}
+        >
+          <span className="truncate">{chat.title}</span>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMenu(!showMenu);
+          }}
+          className="absolute right-2 p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-600 rounded text-lg"
+        >
+          ⋯
+        </button>
+        {showMenu && (
+          <div
+            ref={menuRef}
+            className="absolute right-0 top-full mt-1 w-48 rounded-md shadow-lg bg-gray-700 ring-1 ring-black ring-opacity-5 z-10"
+          >
+            <div className="py-1">
+              <button
+                onClick={() => {
+                  onRename(chat);
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 flex items-center gap-2"
+              >
+                <span>✏️</span> Rename
+              </button>
+              <button
+                onClick={() => {
+                  onDelete(chat.id);
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600 flex items-center gap-2"
+              >
+                <span>🗑️</span> Delete
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (status === 'loading') {
     return <div>Loading...</div>;
   }
@@ -138,17 +247,39 @@ export default function ChatPage() {
         
         <div className="flex-1 overflow-y-auto">
           {chats.map((chat) => (
-            <div
-              key={chat.id}
-              onClick={() => {
-                setCurrentChatId(chat.id);
-                setMessages([]);
-              }}
-              className={`p-2 mb-2 rounded cursor-pointer hover:bg-gray-700 ${
-                currentChatId === chat.id ? 'bg-gray-700' : ''
-              }`}
-            >
-              {chat.title}
+            <div key={chat.id} className="mb-2">
+              {editingChatId === chat.id ? (
+                <div className="flex items-center p-2 pr-8">
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onBlur={() => handleRename(chat.id)}
+                    className="flex-1 bg-gray-700 text-white rounded px-2 py-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRename(chat.id);
+                      if (e.key === 'Escape') setEditingChatId(null);
+                    }}
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <ChatItem
+                  chat={chat}
+                  currentChatId={currentChatId}
+                  onSelect={() => {
+                    setCurrentChatId(chat.id);
+                    fetch(`/api/messages?chatId=${chat.id}`)
+                      .then(res => res.json())
+                      .then(data => setMessages(data));
+                  }}
+                  onRename={(chat) => {
+                    setEditingChatId(chat.id);
+                    setEditingTitle(chat.title);
+                  }}
+                  onDelete={handleDelete}
+                />
+              )}
             </div>
           ))}
         </div>
