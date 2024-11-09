@@ -158,7 +158,7 @@ export default function ChatPage() {
                   ? (darkMode ? '#1F1A79' : '#ffffff')
                   : (darkMode ? '#ffffff' : '#1F1A79'),
                 border: '3px solid ' + (message.role === 'user' 
-                  ? (darkMode ? '#ffffff' : '#1F1A79')
+                  ? (darkMode ? '#D35400' : '#1F1A79')
                   : (darkMode ? '#ffffff' : '#D35400')),
                 borderRadius: message.role === 'user' ? '30px 30px 5px 30px' : '30px 30px 30px 5px',
                 padding: '16px 24px',
