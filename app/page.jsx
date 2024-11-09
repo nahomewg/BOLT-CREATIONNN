@@ -171,69 +171,85 @@ export default function ChatPage() {
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef(null);
 
+    // Function to truncate text with ellipsis
+    const truncateText = (text, maxLength) => {
+      return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    };
+
     useEffect(() => {
       const handleClickOutside = (event) => {
         if (menuRef.current && !menuRef.current.contains(event.target)) {
           setShowMenu(false);
         }
       };
+
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     return (
-      <div className="group relative flex items-center">
+      <div className="relative group">
         <div
-          onClick={onSelect}
-          onDoubleClick={() => onRename(chat)}
-          className={`flex-1 p-2 rounded cursor-pointer hover:bg-gray-700 ${
+          className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-700 ${
             currentChatId === chat.id ? 'bg-gray-700' : ''
           }`}
+          onClick={() => onSelect()}
         >
-          <span className="truncate">{chat.title}</span>
+          <div className="flex-1 min-w-0"> {/* Add min-w-0 to allow truncation */}
+            <p className="text-sm text-white truncate" title={chat.title}>
+              {truncateText(chat.title, 25)}
+            </p>
+          </div>
+          <button
+            className="p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(!showMenu);
+            }}
+          >
+            <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 16 16">
+              <circle cx="8" cy="2" r="1.5" />
+              <circle cx="8" cy="8" r="1.5" />
+              <circle cx="8" cy="14" r="1.5" />
+            </svg>
+          </button>
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowMenu(!showMenu);
-          }}
-          className={`absolute right-2 p-2 opacity-0 group-hover:opacity-100 rounded text-lg cursor-pointer
-            ${currentChatId === chat.id ? '' : 'hover:bg-gray-700'}`}
-        >
-          ⋯
-        </button>
+
         {showMenu && (
           <div
             ref={menuRef}
-            className="absolute right-4 top-full mt-1 w-48 rounded-md shadow-lg bg-gray-700 ring-1 ring-black ring-opacity-5 z-10"
+            className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
           >
             <div className="py-1">
               <button
-                onClick={() => {
-                  exportToPdf(chat.id);
-                  setShowMenu(false);
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 flex items-center gap-2"
-              >
-                <span>📄</span> Export as PDF
-              </button>
-              <button
-                onClick={() => {
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={(e) => {
+                  e.stopPropagation();
                   onRename(chat);
                   setShowMenu(false);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 flex items-center gap-2"
               >
-                <span>✏️</span> Rename
+                Rename
               </button>
               <button
-                onClick={() => {
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                onClick={(e) => {
+                  e.stopPropagation();
                   onDelete(chat.id);
                   setShowMenu(false);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600 flex items-center gap-2"
               >
-                <span>🗑️</span> Delete
+                Delete
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  exportToPdf(chat.id);
+                  setShowMenu(false);
+                }}
+              >
+                Export to PDF
               </button>
             </div>
           </div>
