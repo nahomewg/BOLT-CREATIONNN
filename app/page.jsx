@@ -11,6 +11,7 @@ export default function ChatPage() {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentChatId, setCurrentChatId] = useState(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -20,17 +21,23 @@ export default function ChatPage() {
 
   useEffect(() => {
     // Load previous messages
-    if (session?.user) {
-      fetch('/api/messages')
+    if (session?.user && currentChatId) {
+      fetch(`/api/messages?chatId=${currentChatId}`)
         .then(res => res.json())
         .then(data => setMessages(data))
         .catch(err => console.error('Error loading messages:', err));
+    }
+  }, [session, currentChatId]);
+
+  useEffect(() => {
+    if (session?.user && !currentChatId) {
+      startNewChat();
     }
   }, [session]);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || !currentChatId) return;
 
     setIsLoading(true);
     setError(null);
@@ -46,7 +53,8 @@ export default function ChatPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: inputMessage
+          message: inputMessage,
+          chatId: currentChatId
         }),
       });
 
@@ -55,7 +63,7 @@ export default function ChatPage() {
       }
 
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -77,6 +85,28 @@ export default function ChatPage() {
     }
   }
 
+  const startNewChat = async () => {
+    try {
+      const response = await fetch('/api/chats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create new chat');
+      }
+
+      const data = await response.json();
+      setCurrentChatId(data.id);
+      setMessages([]);
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+      setError(error.message);
+    }
+  };
+
   if (status === 'loading') {
     return <div>Loading...</div>;
   }
@@ -87,17 +117,24 @@ export default function ChatPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Chat with Claude</h1>
-      
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Chat with Claude</h1>
+        <button
+          onClick={startNewChat}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          New Chat
+        </button>
+      </div>
+
       <div className="bg-white rounded-lg shadow mb-4 p-4 min-h-[400px] max-h-[600px] overflow-y-auto">
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`mb-4 p-3 rounded-lg ${
-              message.role === 'user' 
-                ? 'bg-blue-100 ml-8' 
-                : 'bg-gray-100 mr-8'
-            }`}
+            className={`mb-4 p-3 rounded-lg ${message.role === 'user'
+              ? 'bg-blue-100 ml-8'
+              : 'bg-gray-100 mr-8'
+              }`}
           >
             <div className="font-semibold mb-1">
               {message.role === 'user' ? 'You' : 'Claude'}
@@ -105,7 +142,7 @@ export default function ChatPage() {
             <div className="whitespace-pre-wrap">{message.content}</div>
           </div>
         ))}
-        
+
         {isLoading && (
           <div className="text-gray-500 italic">Claude is thinking...</div>
         )}
