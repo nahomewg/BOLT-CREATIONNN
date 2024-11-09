@@ -176,7 +176,7 @@ export default function ChatPage() {
     }, []);
 
     return (
-      <div className="group relative flex items-center pr-8">
+      <div className="group relative flex items-center">
         <div
           onClick={onSelect}
           onDoubleClick={() => onRename(chat)}
@@ -191,14 +191,15 @@ export default function ChatPage() {
             e.stopPropagation();
             setShowMenu(!showMenu);
           }}
-          className="absolute right-2 p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-600 rounded text-lg"
+          className={`absolute right-2 p-2 opacity-0 group-hover:opacity-100 rounded text-lg cursor-pointer
+            ${currentChatId === chat.id ? '' : 'hover:bg-gray-700'}`}
         >
           ⋯
         </button>
         {showMenu && (
           <div
             ref={menuRef}
-            className="absolute right-0 top-full mt-1 w-48 rounded-md shadow-lg bg-gray-700 ring-1 ring-black ring-opacity-5 z-10"
+            className="absolute right-4 top-full mt-1 w-48 rounded-md shadow-lg bg-gray-700 ring-1 ring-black ring-opacity-5 z-10"
           >
             <div className="py-1">
               <button
@@ -237,25 +238,27 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-800 text-white p-4 flex flex-col">
-        <button
-          onClick={startNewChat}
-          className="w-full px-4 py-2 mb-4 bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          New Chat
-        </button>
+      <div className="w-64 bg-gray-800 text-white flex flex-col">
+        <div className="px-4 py-4">
+          <button
+            onClick={startNewChat}
+            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            New Chat
+          </button>
+        </div>
         
         <div className="flex-1 overflow-y-auto">
           {chats.map((chat) => (
-            <div key={chat.id} className="mb-2">
+            <div key={chat.id} className="px-4 mb-2">
               {editingChatId === chat.id ? (
-                <div className="flex items-center p-2 pr-8">
+                <div className="flex items-center">
                   <input
                     type="text"
                     value={editingTitle}
                     onChange={(e) => setEditingTitle(e.target.value)}
                     onBlur={() => handleRename(chat.id)}
-                    className="flex-1 bg-gray-700 text-white rounded px-2 py-1"
+                    className="w-full bg-gray-700 text-white rounded p-2"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleRename(chat.id);
                       if (e.key === 'Escape') setEditingChatId(null);
