@@ -12,9 +12,20 @@ export async function GET(request) {
       );
     }
 
+    const { searchParams } = new URL(request.url);
+    const chatId = searchParams.get('chatId');
+
+    if (!chatId) {
+      return new Response(
+        JSON.stringify({ error: 'Chat ID is required' }),
+        { status: 400 }
+      );
+    }
+
     const messages = await prisma.message.findMany({
       where: {
-        userId: session.user.id
+        userId: session.user.id,
+        chatId: chatId
       },
       orderBy: {
         createdAt: 'asc'

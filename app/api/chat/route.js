@@ -27,7 +27,8 @@ export async function POST(request) {
       data: {
         content: body.message,
         role: 'user',
-        userId: session.user.id
+        userId: session.user.id,
+        chatId: body.chatId
       }
     });
 
@@ -39,7 +40,8 @@ export async function POST(request) {
       data: {
         content: mockResponse,
         role: 'assistant',
-        userId: session.user.id
+        userId: session.user.id,
+        chatId: body.chatId
       }
     });
 
