@@ -9,9 +9,16 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.17.1",
+    "@auth/prisma-adapter": "^2.7.3",
     "@netlify/plugin-nextjs": "latest",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
     "next": "14.0.3",
+    "next-auth": "^4.24.10",
     "react": "18.2.0",
     "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   }
 }
