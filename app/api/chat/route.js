@@ -32,6 +32,16 @@ export async function POST(request) {
       }
     });
 
+    // Update chat title with first message
+    await prisma.chat.update({
+      where: {
+        id: body.chatId
+      },
+      data: {
+        title: body.message.slice(0, 50) + (body.message.length > 50 ? '...' : '')
+      }
+    });
+
     // Mock response instead of calling Anthropic API
     const mockResponse = "This is a test response to save credits. Your message was: " + body.message;
 
