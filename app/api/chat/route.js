@@ -1,58 +1,51 @@
-import { Anthropic } from '@anthropic-ai/sdk';
-import {systemPrompt} from '../../config.js'
+import { getServerSession } from "next-auth/next";
+import { authOptions } from '../auth/[...nextauth]/authOptions';
+import prisma from '../../../lib/prisma';
+import { systemPrompt } from '../../config.js';
+
 export async function POST(request) {
-  console.log('API route started');
   try {
-    // Log env check
-    console.log('Checking API key...');
-    if (!process.env.ANTHROPIC_API_KEY) {
-      console.error('No API key found in environment');
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
       return new Response(
-        JSON.stringify({ error: 'ANTHROPIC_API_KEY is not configured' }),
-        { status: 500 }
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401 }
       );
     }
-    console.log('API key exists');
 
-    // Parse request body with logging
-    console.log('Parsing request body...');
     const body = await request.json();
-    console.log('Request body:', { message: body.message ? 'exists' : 'missing' });
-    
     if (!body.message) {
-      console.error('No message in request body');
       return new Response(
         JSON.stringify({ error: 'Message is required' }),
         { status: 400 }
       );
     }
 
-    // Log Anthropic client creation
-    console.log('Initializing Anthropic client...');
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+    // Store user message
+    const userMessage = await prisma.message.create({
+      data: {
+        content: body.message,
+        role: 'user',
+        userId: session.user.id
+      }
     });
-    console.log('Anthropic client initialized');
 
-    // Log message creation attempt
-    console.log('Attempting to create message...');
-    const completion = await anthropic.messages.create({
-      model: 'claude-3-opus-20240229',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: systemPrompt+ body.message
-        }
-      ]
+    // Mock response instead of calling Anthropic API
+    const mockResponse = "This is a test response to save credits. Your message was: " + body.message;
+
+    // Store assistant response
+    const assistantMessage = await prisma.message.create({
+      data: {
+        content: mockResponse,
+        role: 'assistant',
+        userId: session.user.id
+      }
     });
-    console.log('Message created successfully');
 
-    // Log response creation
-    console.log('Preparing response...');
     return new Response(
       JSON.stringify({
-        message: completion.content[0].text
+        message: mockResponse
       }),
       {
         status: 200,
@@ -63,27 +56,13 @@ export async function POST(request) {
     );
 
   } catch (error) {
-    console.error('Detailed error information:');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('API response data:', error.response?.data);
-    console.error('Full error object:', JSON.stringify(error, null, 2));
-    
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({
         error: 'An error occurred while processing your request',
-        details: error.message,
-        fullError: error.response?.data || error.message,
-        errorName: error.name,
-        errorStack: error.stack
+        details: error.message
       }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      { status: 500 }
     );
   }
 }
