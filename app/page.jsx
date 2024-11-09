@@ -210,6 +210,15 @@ export default function ChatPage() {
             <div className="py-1">
               <button
                 onClick={() => {
+                  exportToPdf(chat.id);
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 flex items-center gap-2"
+              >
+                <span>📄</span> Export as PDF
+              </button>
+              <button
+                onClick={() => {
                   onRename(chat);
                   setShowMenu(false);
                 }}
@@ -231,6 +240,28 @@ export default function ChatPage() {
         )}
       </div>
     );
+  };
+
+  const exportToPdf = async (chatId) => {
+    try {
+      const response = await fetch(`/api/chats/${chatId}/export`, {
+        method: 'GET',
+      });
+      
+      if (!response.ok) throw new Error('Failed to export chat');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `chat-${chatId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error exporting chat:', error);
+    }
   };
 
   if (status === 'loading') {
