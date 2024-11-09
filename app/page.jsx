@@ -1,12 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useSession } from "next-auth/react";
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function ChatPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    // Load previous messages
+    if (session?.user) {
+      fetch('/api/messages')
+        .then(res => res.json())
+        .then(data => setMessages(data))
+        .catch(err => console.error('Error loading messages:', err));
+    }
+  }, [session]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -15,20 +35,19 @@ export default function ChatPage() {
     setIsLoading(true);
     setError(null);
 
-    // Add user message immediately
     const userMessage = { role: 'user', content: inputMessage };
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
 
     try {
-     const response = await fetch('/api/chat', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    message: inputMessage
-  }),
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage
+        }),
       });
 
       if (!response.ok) {
@@ -49,7 +68,6 @@ export default function ChatPage() {
     } catch (err) {
       console.error('Chat error:', err);
       setError(err.message);
-      // Add error message to chat
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: `Error: ${err.message}`
@@ -57,6 +75,14 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (status === 'loading') {
+    return <div>Loading...</div>;
+  }
+
+  if (!session) {
+    return null;
   }
 
   return (
