@@ -44,6 +44,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   messages      Message[]
+  chats         Chat[]
 }
 
 model Message {
@@ -52,5 +53,16 @@ model Message {
   role      String
   createdAt DateTime @default(now())
   userId    String
+  chatId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  title     String
+  createdAt DateTime  @default(now())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
 }
