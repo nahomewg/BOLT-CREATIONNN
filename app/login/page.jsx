@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -23,10 +24,9 @@ export default function LoginPage() {
         setError('Invalid credentials');
       } else {
         router.push('/');
-        router.refresh();
       }
     } catch (error) {
-      setError('An error occurred');
+      setError('An error occurred during sign in');
     }
   };
 
@@ -66,12 +66,20 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <button
-            type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            Sign in
-          </button>
+          <div className="space-y-4">
+            <button
+              type="submit"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Sign in
+            </button>
+            <Link
+              href="/register"
+              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Don't have an account? New account
+            </Link>
+          </div>
         </form>
       </div>
     </div>
