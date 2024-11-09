@@ -13,6 +13,7 @@
     "@netlify/plugin-nextjs": "latest",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
+    "jspdf": "^2.5.2",
     "next": "14.0.3",
     "next-auth": "^4.24.10",
     "react": "18.2.0",
