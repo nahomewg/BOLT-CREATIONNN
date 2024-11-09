@@ -33,16 +33,22 @@ export default function ChatPage() {
   }, [session, currentChatId]);
 
   useEffect(() => {
-    if (session?.user && !currentChatId) {
-      startNewChat();
-    }
-  }, [session]);
-
-  useEffect(() => {
     if (session?.user) {
       fetch('/api/chats')
         .then(res => res.json())
-        .then(data => setChats(data))
+        .then(data => {
+          setChats(data);
+          // If there are existing chats, set the most recent one as current
+          if (data.length > 0) {
+            setCurrentChatId(data[0].id);
+            fetch(`/api/messages?chatId=${data[0].id}`)
+              .then(res => res.json())
+              .then(messages => setMessages(messages));
+          } else {
+            // Only create a new chat if there are no existing chats
+            startNewChat();
+          }
+        })
         .catch(err => console.error('Error loading chats:', err));
     }
   }, [session]);

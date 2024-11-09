@@ -32,15 +32,20 @@ export async function POST(request) {
       }
     });
 
-    // Update chat title with first message
-    await prisma.chat.update({
-      where: {
-        id: body.chatId
-      },
-      data: {
-        title: body.message.slice(0, 50) + (body.message.length > 50 ? '...' : '')
-      }
+    // Inside the POST handler, after processing the message but before sending the response
+    const messages = await prisma.message.findMany({
+      where: { chatId: body.chatId }
     });
+
+    // Only update title if this is the first message
+    if (messages.length === 1) {
+      await prisma.chat.update({
+        where: { id: body.chatId },
+        data: { 
+          title: body.message.slice(0, 50) // Limit title length
+        }
+      });
+    }
 
     // Mock response instead of calling Anthropic API
     const mockResponse = "This is a test response to save credits. Your message was: " + body.message;
