@@ -3,6 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import PropertyCalculator from './components/PropertyCalculator';
+import AnalysisResults from './components/AnalysisResults';
 
 export default function ChatPage() {
   const { data: session, status } = useSession();
@@ -15,6 +17,7 @@ export default function ChatPage() {
   const [chats, setChats] = useState([]);
   const [editingChatId, setEditingChatId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [analysisResults, setAnalysisResults] = useState(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -164,6 +167,57 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error('Error deleting chat:', error);
+    }
+  };
+
+  const handleCalculatorSubmit = async (propertyDetails) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Please analyze this property with the following details:\n${JSON.stringify(propertyDetails, null, 2)}`,
+          chatId: currentChatId,
+          systemPrompt: true
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Parse the response to extract the analysis results
+      const results = {
+        totalStartupCost: data.message.match(/Total Startup Cost: \$?([\d,\.]+)/)?.[1] || 'N/A',
+        monthsToRepay: data.message.match(/Months to Repay: (\d+)/)?.[1] || 'N/A',
+        percentDebtRepaidMonthly: data.message.match(/Percent of Debt Repaid Each Month: ([\d\.]+)%/)?.[1] || 'N/A',
+        annualROI: data.message.match(/Annual ROI After Debt Repaid: ([\d\.]+)%/)?.[1] || 'N/A',
+        netAnnualIncome: data.message.match(/Net Annual Income After Debt Repaid: \$?([\d,\.]+)/)?.[1] || 'N/A',
+        netMonthlyIncome: data.message.match(/Net Monthly Income After Debt Repaid: \$?([\d,\.]+)/)?.[1] || 'N/A'
+      };
+
+      setAnalysisResults(results);
+      setMessages(prev => [...prev, 
+        { role: 'user', content: `Please analyze this property with the following details:\n${JSON.stringify(propertyDetails, null, 2)}` },
+        { role: 'assistant', content: data.message }
+      ]);
+
+    } catch (err) {
+      console.error('Analysis error:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -341,47 +395,62 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Main chat area */}
-      <div className="flex-1 flex flex-col p-4">
-        <div className="flex-1 bg-white rounded-lg shadow mb-4 p-4 overflow-y-auto">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`mb-4 p-3 rounded-lg ${
-                message.role === 'user'
-                  ? 'bg-blue-100 ml-8'
-                  : 'bg-gray-100 mr-8'
-              }`}
-            >
-              <div className="font-semibold mb-1">
-                {message.role === 'user' ? 'You' : 'Claude'}
-              </div>
-              <div className="whitespace-pre-wrap">{message.content}</div>
-            </div>
-          ))}
-
-          {isLoading && (
-            <div className="text-gray-500 italic">Claude is thinking...</div>
-          )}
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col p-4 overflow-y-auto space-y-4">
+        {/* Property Calculator */}
+        <div className="flex-shrink-0">
+          <PropertyCalculator onCalculate={handleCalculatorSubmit} />
         </div>
+        
+        {/* Analysis Results */}
+        {analysisResults && (
+          <div className="flex-shrink-0">
+            <AnalysisResults results={analysisResults} />
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 p-2 border rounded"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !inputMessage.trim()}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-          >
-            Send
-          </button>
-        </form>
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col min-h-[500px]">
+          <div className="flex-1 bg-white rounded-lg shadow mb-4 p-4 overflow-y-auto">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`mb-4 p-3 rounded-lg ${
+                  message.role === 'user'
+                    ? 'bg-blue-100 ml-8'
+                    : 'bg-gray-100 mr-8'
+                }`}
+              >
+                <div className="font-semibold mb-1">
+                  {message.role === 'user' ? 'You' : 'Claude'}
+                </div>
+                <div className="whitespace-pre-wrap">{message.content}</div>
+              </div>
+            ))}
+
+            {isLoading && (
+              <div className="text-gray-500 italic">Claude is thinking...</div>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1 p-2 border rounded"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !inputMessage.trim()}
+              className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+            >
+              Send
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
