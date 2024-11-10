@@ -2,6 +2,11 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from '../auth/[...nextauth]/authOptions';
 import prisma from '../../../lib/prisma';
 import { systemPrompt } from '../../config.js';
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 export async function POST(request) {
   try {
@@ -23,7 +28,7 @@ export async function POST(request) {
     }
 
     // Store user message
-    const userMessage = await prisma.message.create({
+    await prisma.message.create({
       data: {
         content: body.message,
         role: 'user',
@@ -32,28 +37,23 @@ export async function POST(request) {
       }
     });
 
-    // Inside the POST handler, after processing the message but before sending the response
-    const messages = await prisma.message.findMany({
-      where: { chatId: body.chatId }
+    // Call Claude API with structured prompt
+    const response = await anthropic.messages.create({
+      model: "claude-3-sonnet-20240229",
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{
+        role: "user",
+        content: body.message
+      }]
     });
 
-    // Only update title if this is the first message
-    if (messages.length === 1) {
-      await prisma.chat.update({
-        where: { id: body.chatId },
-        data: { 
-          title: body.message.slice(0, 50) // Limit title length
-        }
-      });
-    }
-
-    // Mock response instead of calling Anthropic API
-    const mockResponse = "This is a test response to save credits. Your message was: " + body.message;
+    const assistantResponse = response.content[0].text;
 
     // Store assistant response
-    const assistantMessage = await prisma.message.create({
+    await prisma.message.create({
       data: {
-        content: mockResponse,
+        content: assistantResponse,
         role: 'assistant',
         userId: session.user.id,
         chatId: body.chatId
@@ -61,14 +61,10 @@ export async function POST(request) {
     });
 
     return new Response(
-      JSON.stringify({
-        message: mockResponse
-      }),
+      JSON.stringify({ message: assistantResponse }),
       {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' }
       }
     );
 
