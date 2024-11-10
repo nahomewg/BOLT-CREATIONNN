@@ -170,7 +170,7 @@ export default function ChatPage() {
     }
   };
 
-  const handleCalculatorSubmit = async (propertyDetails) => {
+  const handleCalculatorSubmit = async (analysis) => {
     setIsLoading(true);
     setError(null);
 
@@ -181,9 +181,10 @@ export default function ChatPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: `Please analyze this property with the following details:\n${JSON.stringify(propertyDetails, null, 2)}`,
+          message: JSON.stringify(analysis),
           chatId: currentChatId,
-          systemPrompt: true
+          systemPrompt: true,
+          hidePrompt: true
         }),
       });
 
@@ -192,26 +193,18 @@ export default function ChatPage() {
       }
 
       const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (data.error) throw new Error(data.error);
 
-      // Parse the response to extract the analysis results
-      const results = {
-        totalStartupCost: data.message.match(/Total Startup Cost: \$?([\d,\.]+)/)?.[1] || 'N/A',
-        monthsToRepay: data.message.match(/Months to Repay: (\d+)/)?.[1] || 'N/A',
-        percentDebtRepaidMonthly: data.message.match(/Percent of Debt Repaid Each Month: ([\d\.]+)%/)?.[1] || 'N/A',
-        annualROI: data.message.match(/Annual ROI After Debt Repaid: ([\d\.]+)%/)?.[1] || 'N/A',
-        netAnnualIncome: data.message.match(/Net Annual Income After Debt Repaid: \$?([\d,\.]+)/)?.[1] || 'N/A',
-        netMonthlyIncome: data.message.match(/Net Monthly Income After Debt Repaid: \$?([\d,\.]+)/)?.[1] || 'N/A'
-      };
-
-      setAnalysisResults(results);
-      setMessages(prev => [...prev, 
-        { role: 'user', content: `Please analyze this property with the following details:\n${JSON.stringify(propertyDetails, null, 2)}` },
-        { role: 'assistant', content: data.message }
-      ]);
+      // Don't add messages to chat window
+      setAnalysisResults({
+        totalStartupCost: { value: analysis.financials.totalStartupCost },
+        monthsToRepay: { value: analysis.financials.monthsToRepay },
+        percentDebtRepaidMonthly: { value: analysis.financials.percentDebtRepaidMonthly },
+        annualROI: { value: analysis.financials.annualROI },
+        netAnnualIncome: { value: analysis.financials.netAnnualIncome },
+        netMonthlyIncome: { value: analysis.financials.netMonthlyIncome },
+        aiAnalysis: data.message
+      });
 
     } catch (err) {
       console.error('Analysis error:', err);
