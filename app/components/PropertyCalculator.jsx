@@ -41,33 +41,30 @@ export default function PropertyCalculator({ onCalculate }) {
     const daysPerMonth = 30;
     const monthlyRevenue = formData.nightlyRate * daysPerMonth * (formData.occupancyRate / 100);
     
-    const prompt = `Please analyze this property and provide specific calculations based on the following data:
+    // Create the analysis object directly instead of a prompt string
+    const analysis = {
+      location: formData.area,
+      propertyType: formData.propertyType,
+      layout: {
+        bedrooms: formData.bedrooms,
+        bathrooms: formData.bathrooms,
+        livingRooms: formData.livingRooms
+      },
+      financials: {
+        monthlyRent: formData.rent,
+        cleaningCost: formData.cleaningCost,
+        nightlyRate: formData.nightlyRate,
+        occupancyRate: formData.occupancyRate,
+        totalStartupCost: formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000),
+        monthsToRepay: ((formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000)) / (monthlyRevenue - formData.rent)).toFixed(2),
+        percentDebtRepaidMonthly: (((monthlyRevenue - formData.rent) / (formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000))) * 100).toFixed(2),
+        annualROI: (((monthlyRevenue - formData.rent) * 12) / (formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000)) * 100).toFixed(2),
+        netAnnualIncome: ((monthlyRevenue - formData.rent) * 12).toFixed(2),
+        netMonthlyIncome: (monthlyRevenue - formData.rent).toFixed(2)
+      }
+    };
 
-Property Details:
-- Location: ${formData.area}
-- Type: ${formData.propertyType}
-- Layout: ${formData.bedrooms} bedrooms, ${formData.bathrooms} bathrooms, ${formData.livingRooms} living rooms
-- Monthly Rent: $${formData.rent}
-- Cleaning Cost per Stay: $${formData.cleaningCost}
-- Average Nightly Rate: $${formData.nightlyRate}
-- Target Occupancy Rate: ${formData.occupancyRate}%
-
-Please provide a detailed analysis with these specific calculations:
-
-1. Total Startup Cost: $${formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000)}
-2. Months to Repay: ${((formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000)) / (monthlyRevenue - formData.rent)).toFixed(2)}
-3. Percent of Debt Repaid Each Month: ${(((monthlyRevenue - formData.rent) / (formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000))) * 100).toFixed(2)}%
-4. Annual ROI After Debt Repaid: ${(((monthlyRevenue - formData.rent) * 12) / (formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000)) * 100).toFixed(2)}%
-5. Net Annual Income After Debt Repaid: $${((monthlyRevenue - formData.rent) * 12).toFixed(2)}
-6. Net Monthly Income After Debt Repaid: $${(monthlyRevenue - formData.rent).toFixed(2)}
-
-Please provide a comprehensive analysis including:
-- Market positioning in ${formData.area}
-- Seasonal variations impact
-- Risk assessment
-- Optimization recommendations`;
-
-    onCalculate(prompt);
+    onCalculate(analysis);
   };
 
   return (
