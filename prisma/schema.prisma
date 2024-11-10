@@ -65,4 +65,13 @@ model Chat {
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages  Message[]
+  analysis  Analysis?
+}
+
+model Analysis {
+  id        String   @id @default(cuid())
+  chatId    String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }

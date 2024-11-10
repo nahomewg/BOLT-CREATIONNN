@@ -56,6 +56,21 @@ export default function ChatPage() {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (currentChatId) {
+      fetch(`/api/analysis/${currentChatId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data) {
+            setAnalysisResults(data);
+          } else {
+            setAnalysisResults(null);
+          }
+        })
+        .catch(err => console.error('Error loading analysis:', err));
+    }
+  }, [currentChatId]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
@@ -175,6 +190,7 @@ export default function ChatPage() {
     setError(null);
 
     try {
+      // First get AI analysis
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -195,8 +211,9 @@ export default function ChatPage() {
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
-      // Don't add messages to chat window
-      setAnalysisResults({
+      // Create analysis results object
+      const results = {
+        location: analysis.location,
         totalStartupCost: { value: analysis.financials.totalStartupCost },
         monthsToRepay: { value: analysis.financials.monthsToRepay },
         percentDebtRepaidMonthly: { value: analysis.financials.percentDebtRepaidMonthly },
@@ -204,7 +221,22 @@ export default function ChatPage() {
         netAnnualIncome: { value: analysis.financials.netAnnualIncome },
         netMonthlyIncome: { value: analysis.financials.netMonthlyIncome },
         aiAnalysis: data.message
+      };
+
+      // Save analysis results
+      const analysisResponse = await fetch(`/api/analysis/${currentChatId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(results),
       });
+
+      if (!analysisResponse.ok) {
+        throw new Error('Failed to save analysis');
+      }
+
+      setAnalysisResults(results);
 
     } catch (err) {
       console.error('Analysis error:', err);
