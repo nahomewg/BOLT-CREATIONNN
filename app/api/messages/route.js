@@ -25,7 +25,11 @@ export async function GET(request) {
     const messages = await prisma.message.findMany({
       where: {
         userId: session.user.id,
-        chatId: chatId
+        chatId: chatId,
+        metadata: {
+          path: ['hidden'],
+          equals: false
+        }
       },
       orderBy: {
         createdAt: 'asc'

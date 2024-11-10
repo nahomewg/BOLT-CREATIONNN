@@ -51,6 +51,7 @@ model Message {
   id        String   @id @default(cuid())
   content   String   @db.Text
   role      String
+  metadata  Json     @default("{}")
   createdAt DateTime @default(now())
   userId    String
   chatId    String

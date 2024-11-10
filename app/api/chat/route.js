@@ -27,13 +27,14 @@ export async function POST(request) {
       );
     }
 
-    // Store user message
+    // Store user message with hidePrompt flag
     await prisma.message.create({
       data: {
         content: body.message,
         role: 'user',
         userId: session.user.id,
-        chatId: body.chatId
+        chatId: body.chatId,
+        metadata: { hidden: body.hidePrompt || false }
       }
     });
 
@@ -41,7 +42,7 @@ export async function POST(request) {
     const response = await anthropic.messages.create({
       model: "claude-3-sonnet-20240229",
       max_tokens: 4096,
-      system: systemPrompt,
+      system: body.systemPrompt ? systemPrompt : undefined,
       messages: [{
         role: "user",
         content: body.message
@@ -50,13 +51,14 @@ export async function POST(request) {
 
     const assistantResponse = response.content[0].text;
 
-    // Store assistant response
+    // Store assistant response with same hidePrompt flag
     await prisma.message.create({
       data: {
         content: assistantResponse,
         role: 'assistant',
         userId: session.user.id,
-        chatId: body.chatId
+        chatId: body.chatId,
+        metadata: { hidden: body.hidePrompt || false }
       }
     });
 
@@ -67,14 +69,9 @@ export async function POST(request) {
         headers: { 'Content-Type': 'application/json' }
       }
     );
-
   } catch (error) {
-    console.error('Error:', error);
     return new Response(
-      JSON.stringify({
-        error: 'An error occurred while processing your request',
-        details: error.message
-      }),
+      JSON.stringify({ error: error.message }),
       { status: 500 }
     );
   }
