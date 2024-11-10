@@ -12,11 +12,16 @@ export default function AnalysisResults({ results }) {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     let yPos = 20;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 20;
+    const lineHeight = 10;
 
+    // Title
     doc.setFontSize(16);
     doc.text('Property Analysis Report', 105, yPos, { align: 'center' });
     yPos += 20;
 
+    // Metrics
     doc.setFontSize(12);
     const metrics = [
       { label: 'Total Startup Cost', value: results.totalStartupCost },
@@ -28,16 +33,41 @@ export default function AnalysisResults({ results }) {
     ];
 
     metrics.forEach(metric => {
-      doc.text(`${metric.label}: ${formatValue(metric.value)}`, 20, yPos);
-      yPos += 10;
+      // Check if we need a new page
+      if (yPos > pageHeight - margin) {
+        doc.addPage();
+        yPos = margin;
+      }
+      doc.text(`${metric.label}: ${formatValue(metric.value)}`, margin, yPos);
+      yPos += lineHeight;
     });
 
+    // AI Analysis
     if (results.aiAnalysis) {
-      yPos += 10;
-      doc.text('AI Analysis:', 20, yPos);
-      yPos += 10;
-      const splitText = doc.splitTextToSize(results.aiAnalysis, 170);
-      doc.text(splitText, 20, yPos);
+      yPos += lineHeight; // Add extra spacing before AI analysis
+
+      // Check if we need a new page
+      if (yPos > pageHeight - margin) {
+        doc.addPage();
+        yPos = margin;
+      }
+
+      doc.text('AI Analysis:', margin, yPos);
+      yPos += lineHeight;
+
+      // Split the AI analysis text into lines that fit the page width
+      const maxWidth = doc.internal.pageSize.width - (margin * 2);
+      const splitText = doc.splitTextToSize(results.aiAnalysis, maxWidth);
+
+      // Add text line by line, creating new pages as needed
+      splitText.forEach(line => {
+        if (yPos > pageHeight - margin) {
+          doc.addPage();
+          yPos = margin;
+        }
+        doc.text(line, margin, yPos);
+        yPos += lineHeight;
+      });
     }
 
     doc.save('property-analysis.pdf');
