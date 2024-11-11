@@ -72,10 +72,14 @@ export default function PropertyCalculator({ onCalculate }) {
       <h2 className="text-2xl font-bold mb-4">Property Analysis Calculator</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
+          <label htmlFor="area" className="block text-sm font-medium text-gray-700 mb-1">
+            Location/Area
+          </label>
           <input
+            id="area"
             type="text"
             name="area"
-            placeholder="Location/Area (e.g., Downtown Seattle, WA)"
+            placeholder="e.g., Downtown Seattle, WA"
             value={formData.area}
             onChange={handleInputChange}
             className="w-full p-2 border rounded"
@@ -84,99 +88,161 @@ export default function PropertyCalculator({ onCalculate }) {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <select
-            name="propertyType"
-            value={formData.propertyType}
-            onChange={handleInputChange}
-            className="p-2 border rounded"
-            required
-          >
-            <option value="">Select Property Type</option>
-            {propertyTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label htmlFor="propertyType" className="block text-sm font-medium text-gray-700 mb-1">
+              Property Type
+            </label>
+            <select
+              id="propertyType"
+              name="propertyType"
+              value={formData.propertyType}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+              required
+            >
+              <option value="">Select Type</option>
+              {propertyTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
 
-          <input
-            type="number"
-            name="cleaningCost"
-            placeholder="Cleaning Cost per Booking ($)"
-            value={formData.cleaningCost}
-            onChange={handleInputChange}
-            className="p-2 border rounded"
-            required
-          />
+          <div>
+            <label htmlFor="cleaningCost" className="block text-sm font-medium text-gray-700 mb-1">
+              Cleaning Cost
+            </label>
+            <input
+              id="cleaningCost"
+              type="number"
+              name="cleaningCost"
+              placeholder="$ per cleaning"
+              value={formData.cleaningCost}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+              min="0"
+              step="5"
+              required
+            />
+          </div>
 
-          <input
-            type="number"
-            name="rent"
-            placeholder="Monthly Rent ($)"
-            value={formData.rent}
-            onChange={handleInputChange}
-            className="p-2 border rounded"
-            required
-          />
+          <div>
+            <label htmlFor="rent" className="block text-sm font-medium text-gray-700 mb-1">
+              Monthly Rent
+            </label>
+            <input
+              id="rent"
+              type="number"
+              name="rent"
+              placeholder="$ per month"
+              value={formData.rent}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+              min="0"
+              step="50"
+              required
+            />
+          </div>
 
-          <input
-            type="number"
-            name="livingRooms"
-            placeholder="Number of Living Rooms"
-            value={formData.livingRooms}
-            onChange={handleInputChange}
-            className="p-2 border rounded"
-            required
-          />
+          <div>
+            <label htmlFor="livingRooms" className="block text-sm font-medium text-gray-700 mb-1">
+              Living Rooms
+            </label>
+            <input
+              id="livingRooms"
+              type="number"
+              name="livingRooms"
+              placeholder="Number of living rooms"
+              value={formData.livingRooms}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+              min="0"
+              max="10"
+              step="1"
+              required
+            />
+          </div>
 
-          <input
-            type="number"
-            name="bedrooms"
-            placeholder="Number of Bedrooms"
-            value={formData.bedrooms}
-            onChange={handleInputChange}
-            className="p-2 border rounded"
-            required
-          />
+          <div>
+            <label htmlFor="bedrooms" className="block text-sm font-medium text-gray-700 mb-1">
+              Bedrooms
+            </label>
+            <input
+              id="bedrooms"
+              type="number"
+              name="bedrooms"
+              placeholder="Number of bedrooms"
+              value={formData.bedrooms}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+              min="0"
+              max="10"
+              step="1"
+              required
+            />
+          </div>
 
-          <input
-            type="number"
-            name="bathrooms"
-            placeholder="Number of Bathrooms"
-            value={formData.bathrooms}
-            onChange={handleInputChange}
-            className="p-2 border rounded"
-            required
-          />
+          <div>
+            <label htmlFor="bathrooms" className="block text-sm font-medium text-gray-700 mb-1">
+              Bathrooms
+            </label>
+            <input
+              id="bathrooms"
+              type="number"
+              name="bathrooms"
+              placeholder="Number of bathrooms"
+              value={formData.bathrooms}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+              min="0"
+              max="10"
+              step="1"
+              required
+            />
+          </div>
 
-          <input
-            type="number"
-            name="nightlyRate"
-            placeholder="Average Nightly Rate ($)"
-            value={formData.nightlyRate}
-            onChange={handleInputChange}
-            className="p-2 border rounded"
-            required
-          />
+          <div>
+            <label htmlFor="nightlyRate" className="block text-sm font-medium text-gray-700 mb-1">
+              Nightly Rate
+            </label>
+            <input
+              id="nightlyRate"
+              type="number"
+              name="nightlyRate"
+              placeholder="$ per night"
+              value={formData.nightlyRate}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+              min="0"
+              step="5"
+              required
+            />
+          </div>
 
-          <input
-            type="number"
-            name="occupancyRate"
-            placeholder="Occupancy Rate (%)"
-            value={formData.occupancyRate}
-            onChange={handleInputChange}
-            className="p-2 border rounded"
-            min="0"
-            max="100"
-            required
-          />
+          <div>
+            <label htmlFor="occupancyRate" className="block text-sm font-medium text-gray-700 mb-1">
+              Occupancy Rate
+            </label>
+            <input
+              id="occupancyRate"
+              type="number"
+              name="occupancyRate"
+              placeholder="Expected occupancy %"
+              value={formData.occupancyRate}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+              min="0"
+              max="100"
+              step="1"
+              required
+            />
+          </div>
         </div>
 
         <div className="flex justify-center">
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-12 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
+            className="w-1/2 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
@@ -187,7 +253,7 @@ export default function PropertyCalculator({ onCalculate }) {
                 Analyzing...
               </div>
             ) : (
-              'Calculate'
+              'Calculate Analysis'
             )}
           </button>
         </div>
