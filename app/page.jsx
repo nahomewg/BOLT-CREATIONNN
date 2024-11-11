@@ -37,7 +37,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]); // Added isLoading to trigger scroll when loading spinner appears
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -66,6 +66,8 @@ export default function ChatPage() {
     setInputMessage('');
 
     try {
+      // Temporarily commented out API call
+      /*
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -90,6 +92,18 @@ export default function ChatPage() {
         role: 'assistant',
         content: data.message
       }]);
+      */
+
+      // Simulate API delay
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Temporary placeholder response
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "This is a placeholder response while the API integration is in progress."
+      }]);
+      setIsLoading(false);
 
     } catch (err) {
       console.error('Chat error:', err);
@@ -198,7 +212,9 @@ export default function ChatPage() {
       {/* Header - Fixed */}
       <div className="w-full max-w-4xl mx-auto px-4 py-6 flex justify-between items-center sticky top-0 z-50 bg-transparent backdrop-blur-sm">
         <div className="flex items-center">
-          <img src="/logo.png" alt="Logo"/>
+          <a href="/" className="cursor-pointer">
+            <img src="/logo.png" alt="Logo"/>
+          </a>
         </div>
         <div className="text-white text-lg cursor-pointer">
           Log in
@@ -211,12 +227,31 @@ export default function ChatPage() {
           <div className="max-w-4xl w-full mx-auto">
             {(!messages || messages.length === 0) && (
               <div className="text-center px-4 sm:px-6 md:px-8 py-8">
-                <h1 className="text-4xl font-bold text-white mb-4">
+                <h1 className="text-4xl font-bold text-white mb-4 typewriter-text" style={{
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  animation: 'typing 2s steps(40, end)',
+                  margin: '0 auto',
+                  maxWidth: 'fit-content'
+                }}>
                   Property Profit Analyzer
                 </h1>
-                <p className="max-w-2xl mx-auto text-gray-400">
+                <p className="max-w-2xl mx-auto text-gray-400 typewriter-text" style={{
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  animation: 'typing 2s steps(40, end) 2s forwards',
+                  margin: '0 auto',
+                  maxWidth: '0',
+                  opacity: '0'
+                }}>
                   Get instant insights on your Airbnb property's potential value, profitability, and market performance.
                 </p>
+                <style jsx>{`
+                  @keyframes typing {
+                    from { max-width: 0; opacity: 0; }
+                    to { max-width: 100%; opacity: 1; }
+                  }
+                `}</style>
                 <div className="mt-8 p-4 rounded-xl relative flex flex-col mx-auto" style={{ border: '2px solid rgba(255, 255, 255, 0.3)', backgroundColor: 'transparent', maxWidth: '500px', minHeight: '100px' }}>
                   <form onSubmit={handleSubmit} id="chatForm">
                     <textarea
@@ -376,6 +411,19 @@ export default function ChatPage() {
                       </div>
                     </div>
                   ))}
+                  {isLoading && (
+                    <div className="mr-auto flex items-center gap-2 text-white p-4">
+                      <div 
+                        className="animate-spin rounded-full h-4 w-4"
+                        style={{
+                          border: '2px solid white',
+                          borderTopColor: '#CC5500'
+                        }}
+                      ></div>
+                      Expert is thinking...
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} /> {/* Added ref for scrolling */}
                 </div>
               </>
             )}
