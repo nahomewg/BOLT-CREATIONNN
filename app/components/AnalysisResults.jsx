@@ -12,54 +12,86 @@ export default function AnalysisResults({ results }) {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     let yPos = 20;
+    const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     const margin = 20;
     const lineHeight = 10;
+    const contentWidth = pageWidth - (margin * 2);
 
-    // Title
+    // Header styling
+    doc.setFillColor(52, 144, 220); // Blue header
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.text('Property Analysis Report', pageWidth / 2, 25, { align: 'center' });
+
+    // Reset text color for content
+    doc.setTextColor(0, 0, 0);
+    yPos = 50;
+
+    // Location info
     doc.setFontSize(16);
-    doc.text('Property Analysis Report', 105, yPos, { align: 'center' });
-    yPos += 20;
+    doc.text(`Location: ${results.location}`, margin, yPos);
+    yPos += lineHeight * 2;
 
-    // Metrics
+    // Financial Metrics Section
+    doc.setFontSize(14);
+    doc.setTextColor(52, 144, 220);
+    doc.text('Financial Metrics', margin, yPos);
+    doc.line(margin, yPos + 2, pageWidth - margin, yPos + 2);
+    yPos += lineHeight * 2;
+
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(12);
+
     const metrics = [
-      { label: 'Total Startup Cost', value: results.totalStartupCost },
-      { label: 'Months to Repay', value: results.monthsToRepay },
-      { label: 'Percent of Debt Repaid Monthly', value: results.percentDebtRepaidMonthly },
-      { label: 'Annual ROI After Debt Repaid', value: results.annualROI },
-      { label: 'Net Annual Income After Debt Repaid', value: results.netAnnualIncome },
-      { label: 'Net Monthly Income After Debt Repaid', value: results.netMonthlyIncome }
+      { label: 'Total Startup Cost', value: `$${formatValue(results.totalStartupCost)}` },
+      { label: 'Months to Repay', value: `${formatValue(results.monthsToRepay)} months` },
+      { label: 'Monthly Debt Repayment', value: `${formatValue(results.percentDebtRepaidMonthly)}%` },
+      { label: 'Annual ROI', value: `${formatValue(results.annualROI)}%` },
+      { label: 'Net Annual Income', value: `$${formatValue(results.netAnnualIncome)}` },
+      { label: 'Net Monthly Income', value: `$${formatValue(results.netMonthlyIncome)}` }
     ];
 
     metrics.forEach(metric => {
-      // Check if we need a new page
-      if (yPos > pageHeight - margin) {
+      if (yPos > pageHeight - margin * 4) {
         doc.addPage();
         yPos = margin;
       }
-      doc.text(`${metric.label}: ${formatValue(metric.value)}`, margin, yPos);
-      yPos += lineHeight;
+      
+      // Label in bold
+      doc.setFont(undefined, 'bold');
+      doc.text(metric.label + ':', margin, yPos);
+      
+      // Value in normal font
+      doc.setFont(undefined, 'normal');
+      doc.text(metric.value, margin + 80, yPos);
+      
+      yPos += lineHeight * 1.5;
     });
 
-    // AI Analysis
+    // AI Analysis Section
     if (results.aiAnalysis) {
-      yPos += lineHeight; // Add extra spacing before AI analysis
+      yPos += lineHeight;
 
-      // Check if we need a new page
-      if (yPos > pageHeight - margin) {
+      if (yPos > pageHeight - margin * 4) {
         doc.addPage();
         yPos = margin;
       }
 
-      doc.text('AI Analysis:', margin, yPos);
-      yPos += lineHeight;
+      // AI Analysis header
+      doc.setFontSize(14);
+      doc.setTextColor(52, 144, 220);
+      doc.text('AI Analysis', margin, yPos);
+      doc.line(margin, yPos + 2, pageWidth - margin, yPos + 2);
+      yPos += lineHeight * 2;
 
-      // Split the AI analysis text into lines that fit the page width
-      const maxWidth = doc.internal.pageSize.width - (margin * 2);
-      const splitText = doc.splitTextToSize(results.aiAnalysis, maxWidth);
+      // Reset text color and size for analysis content
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(11);
 
-      // Add text line by line, creating new pages as needed
+      const splitText = doc.splitTextToSize(results.aiAnalysis, contentWidth);
       splitText.forEach(line => {
         if (yPos > pageHeight - margin) {
           doc.addPage();
@@ -70,7 +102,21 @@ export default function AnalysisResults({ results }) {
       });
     }
 
-    doc.save('property-analysis.pdf');
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: 'center' }
+      );
+    }
+
+    doc.save('property-analysis-report.pdf');
   };
 
   return (
