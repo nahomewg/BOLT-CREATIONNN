@@ -18,6 +18,7 @@ export default function ChatPage() {
   const [editingChatId, setEditingChatId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [analysisResults, setAnalysisResults] = useState(null);
+  const [analysisInProgress, setAnalysisInProgress] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -186,6 +187,7 @@ export default function ChatPage() {
   };
 
   const handleCalculatorSubmit = async (analysis) => {
+    setAnalysisInProgress(true);
     setIsLoading(true);
     setError(null);
 
@@ -243,7 +245,16 @@ export default function ChatPage() {
       setError(err.message);
     } finally {
       setIsLoading(false);
+      setAnalysisInProgress(false);
     }
+  };
+
+  const handleChatSelect = (chatId) => {
+    if (analysisInProgress) {
+      alert('Please wait for the current analysis to complete');
+      return;
+    }
+    setCurrentChatId(chatId);
   };
 
   const ChatItem = ({ chat, currentChatId, onSelect, onRename, onDelete }) => {
@@ -402,7 +413,7 @@ export default function ChatPage() {
                   chat={chat}
                   currentChatId={currentChatId}
                   onSelect={() => {
-                    setCurrentChatId(chat.id);
+                    handleChatSelect(chat.id);
                     fetch(`/api/messages?chatId=${chat.id}`)
                       .then(res => res.json())
                       .then(data => setMessages(data));
@@ -441,11 +452,10 @@ export default function ChatPage() {
                 messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`mb-4 p-3 rounded-lg ${
-                      message.role === 'user'
+                    className={`mb-4 p-3 rounded-lg ${message.role === 'user'
                         ? 'bg-blue-100 ml-8'
                         : 'bg-gray-100 mr-8'
-                    }`}
+                      }`}
                   >
                     <div className="font-semibold mb-1">
                       {message.role === 'user' ? 'You' : 'Claude'}
