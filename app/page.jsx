@@ -147,12 +147,16 @@ export default function ChatPage() {
         throw new Error('Failed to create new chat');
       }
 
-      const data = await response.json();
-      setCurrentChatId(data.id);
+      const chat = await response.json();
+      setCurrentChatId(chat.id);
+      setAnalysisResults(null);
       setMessages([]);
+      
+      // Don't update chat history immediately
+      // We'll update it only after a successful analysis
     } catch (error) {
       console.error('Error creating new chat:', error);
-      setError(error.message);
+      setError('Failed to create new chat');
     }
   };
 
@@ -247,9 +251,16 @@ export default function ChatPage() {
 
       setAnalysisResults(results);
 
-    } catch (err) {
-      console.error('Analysis error:', err);
-      setError(err.message);
+      // Now fetch updated chat list to include the new chat with analysis
+      const chatsResponse = await fetch('/api/chats');
+      if (chatsResponse.ok) {
+        const chats = await chatsResponse.json();
+        setChats(chats);
+      }
+
+    } catch (error) {
+      console.error('Error:', error);
+      setError(error.message);
     } finally {
       setIsLoading(false);
       setAnalysisInProgress(false);
@@ -398,7 +409,7 @@ export default function ChatPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {chats.map((chat) => (
+          {Array.isArray(chats) && chats.map((chat) => (
             <div key={chat.id} className="px-4 mb-2">
               {editingChatId === chat.id ? (
                 <div className="flex items-center">

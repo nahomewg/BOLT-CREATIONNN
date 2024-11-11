@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from '../auth/[...nextauth]/authOptions';
-import prisma from '../../../lib/prisma';
+import { authOptions } from "../auth/[...nextauth]/authOptions";
+import prisma from "@/lib/prisma";
 
-export async function GET(request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
@@ -15,23 +15,25 @@ export async function GET(request) {
 
     const chats = await prisma.chat.findMany({
       where: {
-        userId: session.user.id
+        userId: session.user.id,
+        analysis: {
+          isNot: null
+        }
       },
       orderBy: {
         createdAt: 'desc'
+      },
+      include: {
+        analysis: true
       }
     });
 
-    return new Response(
-      JSON.stringify(chats),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return new Response(JSON.stringify(chats), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
+    console.error('Error fetching chats:', error);
     return new Response(
       JSON.stringify({ error: 'Failed to fetch chats' }),
       { status: 500 }
