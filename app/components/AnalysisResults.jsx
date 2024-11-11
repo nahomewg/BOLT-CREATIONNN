@@ -83,7 +83,7 @@ export default function AnalysisResults({ results }) {
       // AI Analysis header
       doc.setFontSize(14);
       doc.setTextColor(52, 144, 220);
-      doc.text('AI Analysis', margin, yPos);
+      doc.text('Expert Analysis', margin, yPos);
       doc.line(margin, yPos + 2, pageWidth - margin, yPos + 2);
       yPos += lineHeight * 2;
 
