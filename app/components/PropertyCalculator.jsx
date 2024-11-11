@@ -168,10 +168,6 @@ export default function PropertyCalculator({ onCalculate }) {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validate all fields
-    const newErrors = validateForm();
-    setErrors(newErrors);
-
     // Mark all fields as touched
     const allTouched = Object.keys(formData).reduce((acc, field) => ({
       ...acc,
@@ -179,31 +175,47 @@ export default function PropertyCalculator({ onCalculate }) {
     }), {});
     setTouched(allTouched);
 
+    // Validate all fields
+    const newErrors = validateForm();
+    setErrors(newErrors);
+
     if (Object.keys(newErrors).length > 0) {
       setIsSubmitting(false);
       return;
     }
 
     try {
+      // Convert string values to numbers for calculations
+      const numericFormData = {
+        ...formData,
+        cleaningCost: Number(formData.cleaningCost),
+        rent: Number(formData.rent),
+        livingRooms: Number(formData.livingRooms),
+        bedrooms: Number(formData.bedrooms),
+        bathrooms: Number(formData.bathrooms),
+        nightlyRate: Number(formData.nightlyRate),
+        occupancyRate: Number(formData.occupancyRate),
+      };
+
       const calculatedData = {
         location: formData.area,
         propertyType: formData.propertyType,
         layout: {
-          bedrooms: Number(formData.bedrooms),
-          bathrooms: Number(formData.bathrooms),
-          livingRooms: Number(formData.livingRooms)
+          bedrooms: numericFormData.bedrooms,
+          bathrooms: numericFormData.bathrooms,
+          livingRooms: numericFormData.livingRooms
         },
         financials: {
-          monthlyRent: Number(formData.rent),
-          cleaningCost: Number(formData.cleaningCost),
-          nightlyRate: Number(formData.nightlyRate),
-          occupancyRate: Number(formData.occupancyRate),
-          totalStartupCost: Number(formData.rent) * 2 + (Number(formData.bedrooms) * 4000) + (Number(formData.bathrooms) * 1000) + (Number(formData.livingRooms) * 2000),
-          monthsToRepay: ((Number(formData.rent) * 2 + (Number(formData.bedrooms) * 4000) + (Number(formData.bathrooms) * 1000) + (Number(formData.livingRooms) * 2000)) / (Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100))).toFixed(2),
-          percentDebtRepaidMonthly: (((Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100) - Number(formData.rent)) / (Number(formData.rent) * 2 + (Number(formData.bedrooms) * 4000) + (Number(formData.bathrooms) * 1000) + (Number(formData.livingRooms) * 2000))) * 100).toFixed(2),
-          annualROI: (((Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100) - Number(formData.rent)) * 12) / (Number(formData.rent) * 2 + (Number(formData.bedrooms) * 4000) + (Number(formData.bathrooms) * 1000) + (Number(formData.livingRooms) * 2000)) * 100).toFixed(2),
-          netAnnualIncome: ((Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100) - Number(formData.rent)) * 12).toFixed(2),
-          netMonthlyIncome: (Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100) - Number(formData.rent)).toFixed(2)
+          monthlyRent: numericFormData.rent,
+          cleaningCost: numericFormData.cleaningCost,
+          nightlyRate: numericFormData.nightlyRate,
+          occupancyRate: numericFormData.occupancyRate,
+          totalStartupCost: numericFormData.rent * 2 + (numericFormData.bedrooms * 4000) + (numericFormData.bathrooms * 1000) + (numericFormData.livingRooms * 2000),
+          monthsToRepay: ((numericFormData.rent * 2 + (numericFormData.bedrooms * 4000) + (numericFormData.bathrooms * 1000) + (numericFormData.livingRooms * 2000)) / (numericFormData.nightlyRate * 30 * (numericFormData.occupancyRate / 100))).toFixed(2),
+          percentDebtRepaidMonthly: (((numericFormData.nightlyRate * 30 * (numericFormData.occupancyRate / 100) - numericFormData.rent) / (numericFormData.rent * 2 + (numericFormData.bedrooms * 4000) + (numericFormData.bathrooms * 1000) + (numericFormData.livingRooms * 2000))) * 100).toFixed(2),
+          annualROI: (((numericFormData.nightlyRate * 30 * (numericFormData.occupancyRate / 100) - numericFormData.rent) * 12) / (numericFormData.rent * 2 + (numericFormData.bedrooms * 4000) + (numericFormData.bathrooms * 1000) + (numericFormData.livingRooms * 2000)) * 100).toFixed(2),
+          netAnnualIncome: ((numericFormData.nightlyRate * 30 * (numericFormData.occupancyRate / 100) - numericFormData.rent) * 12).toFixed(2),
+          netMonthlyIncome: (numericFormData.nightlyRate * 30 * (numericFormData.occupancyRate / 100) - numericFormData.rent).toFixed(2)
         }
       };
 
@@ -442,7 +454,7 @@ export default function PropertyCalculator({ onCalculate }) {
         <div className="flex justify-center">
           <button
             type="submit"
-            disabled={isSubmitting || Object.keys(errors).length > 0}
+            disabled={isSubmitting}
             className="w-1/2 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
