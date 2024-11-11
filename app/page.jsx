@@ -434,62 +434,65 @@ export default function ChatPage() {
         )}
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col min-h-[500px]">
-          <div className="flex-1 bg-white rounded-lg shadow mb-4 p-4 overflow-y-auto">
-            {messages.length > 0 ? (
-              messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`mb-4 p-3 rounded-lg ${message.role === 'user'
-                      ? 'bg-blue-100 ml-8'
-                      : 'bg-gray-100 mr-8'
+        {analysisResults ? (
+          <div className="flex-1 flex flex-col min-h-[500px]">
+            <div className="flex-1 bg-white rounded-lg shadow mb-4 p-4 overflow-y-auto">
+              {messages.length > 0 ? (
+                messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`mb-4 p-3 rounded-lg ${
+                      message.role === 'user'
+                        ? 'bg-blue-100 ml-8'
+                        : 'bg-gray-100 mr-8'
                     }`}
-                >
-                  <div className="font-semibold mb-1">
-                    {message.role === 'user' ? 'You' : 'Claude'}
+                  >
+                    <div className="font-semibold mb-1">
+                      {message.role === 'user' ? 'You' : 'Claude'}
+                    </div>
+                    <div className="whitespace-pre-wrap">{message.content}</div>
                   </div>
-                  <div className="whitespace-pre-wrap">{message.content}</div>
+                ))
+              ) : (
+                <div className="text-gray-600 text-center p-4">
+                  <p className="mb-2">Analysis complete! Have any questions about the results?</p>
+                  <p>Feel free to ask about:</p>
+                  <div className="flex justify-center mt-2">
+                    <ul className="list-disc pl-14 space-y-1 inline-block">
+                      <li className="text-left">Location strategy</li>
+                      <li className="text-left">Revenue projections</li>
+                      <li className="text-left">Operating costs</li>
+                      <li className="text-left">Market competition</li>
+                      <li className="text-left">Optimization suggestions</li>
+                    </ul>
+                  </div>
                 </div>
-              ))
-            ) : analysisResults ? (
-              <div className="text-gray-600 text-center p-4">
-                <p className="mb-2">Analysis complete! Have any questions about the results?</p>
-                <p>Feel free to ask about:</p>
-                <div className="flex justify-center mt-2">
-                  <ul className="list-disc pl-14 space-y-1 inline-block">
-                    <li className="text-left">Location strategy</li>
-                    <li className="text-left">Revenue projections</li>
-                    <li className="text-left">Operating costs</li>
-                    <li className="text-left">Market competition</li>
-                    <li className="text-left">Optimization suggestions</li>
-                  </ul>
-                </div>
-              </div>
-            ) : null}
+              )}
 
-            {isLoading && (
-              <div className="text-gray-500 italic">Claude is thinking...</div>
-            )}
+              {isLoading && (
+                <div className="text-gray-500 italic">Claude is thinking...</div>
+              )}
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 p-2 border rounded"
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !inputMessage.trim()}
+                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+              >
+                Send
+              </button>
+            </form>
           </div>
-
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 p-2 border rounded"
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !inputMessage.trim()}
-              className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-            >
-              Send
-            </button>
-          </form>
-        </div>
+        ) : null}
       </div>
     </div>
   );
