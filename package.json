@@ -7,16 +7,19 @@
     "build": "next build",
     "start": "next start",
     "analyze": "ANALYZE=true npm run build",
-    "postbuild": "next-sitemap"
+    "postbuild": "next-sitemap",
+    "db:local": "./scripts/switch-db.sh local",
+    "db:supabase": "./scripts/switch-db.sh supabase",
+    "db:status": "grep DATABASE_URL .env"
   },
   "dependencies": {
-    "next": "^14.2.17",
-    "next-auth": "4.24.10",
-    "@auth/core": "0.34.2",
     "@anthropic-ai/sdk": "^0.17.1",
+    "@auth/core": "0.34.2",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "jspdf": "^2.5.2",
+    "next": "^14.2.17",
+    "next-auth": "4.24.10",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },

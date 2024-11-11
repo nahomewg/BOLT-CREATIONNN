@@ -41,3 +41,57 @@ netlify dev
 If your browser doesn't navigate to the site automatically, visit [localhost:8888](http://localhost:8888).
 
 
+# Database Setup
+
+This project supports both local PostgreSQL and Supabase databases. Here's how to set up and switch between them:
+
+## Initial Setup
+
+Create two environment files:
+
+- **.env.local**: Environment file for local PostgreSQL setup
+- **.env.supabase**: Environment file for Supabase setup
+
+## Switching Between Databases
+
+The project includes built-in scripts to switch between databases:
+
+- Run the appropriate script to toggle between local and Supabase environments.
+
+## Database Operations
+
+After switching databases, you may need to run these commands:
+
+- `npx prisma migrate dev` to apply database migrations.
+- `npx prisma db seed` to seed the database (if needed).
+
+## Testing Database Connection
+
+You can verify your database connection by running:
+
+```sh
+npx prisma db pull
+```
+
+This will attempt to connect to the database and display the current connection status.
+
+## Important Notes
+
+- **Data between databases is not automatically synced**: Be careful when switching databases, as data from one environment will not be reflected in the other.
+- **Always backup data before switching databases**: To avoid data loss, always create a backup.
+- **Supabase connection requires SSL by default**: Ensure your SSL settings are correctly configured.
+- **Local PostgreSQL setup**: Make sure PostgreSQL is installed and running for local development.
+- **Supabase IP whitelisting**: When using Supabase, ensure your IP address is whitelisted in the Supabase dashboard.
+
+## Environment Variables
+
+Your `.env` file should contain these variables:
+
+- `DATABASE_URL`: Your database connection string
+- `NEXTAUTH_SECRET`: Random string for session encryption
+- `ANTHROPIC_API_KEY`: Your Claude API key
+- `NEXTAUTH_URL`: Your application URL
+
+---
+
+Feel free to contribute or ask questions if you need further clarification!
