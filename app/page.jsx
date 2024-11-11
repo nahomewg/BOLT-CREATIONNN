@@ -1,10 +1,17 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import PropertyCalculator from './components/PropertyCalculator';
-import AnalysisResults from './components/AnalysisResults';
+
+const PropertyCalculator = dynamic(() => import('./components/PropertyCalculator'), {
+  loading: () => <div>Loading calculator...</div>
+});
+
+const AnalysisResults = dynamic(() => import('./components/AnalysisResults'), {
+  loading: () => <div>Loading results...</div>
+});
 
 export default function ChatPage() {
   const { data: session, status } = useSession();

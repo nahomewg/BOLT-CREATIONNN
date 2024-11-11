@@ -5,17 +5,18 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "analyze": "ANALYZE=true npm run build",
+    "postbuild": "next-sitemap"
   },
   "dependencies": {
+    "next": "^14.2.17",
+    "next-auth": "4.24.10",
+    "@auth/core": "0.34.2",
     "@anthropic-ai/sdk": "^0.17.1",
-    "@auth/prisma-adapter": "^2.7.3",
-    "@netlify/plugin-nextjs": "latest",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "jspdf": "^2.5.2",
-    "next": "14.0.3",
-    "next-auth": "^4.24.10",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
