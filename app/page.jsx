@@ -26,6 +26,7 @@ export default function ChatPage() {
   const [editingTitle, setEditingTitle] = useState('');
   const [analysisResults, setAnalysisResults] = useState(null);
   const [analysisInProgress, setAnalysisInProgress] = useState(false);
+  const [resetTrigger, setResetTrigger] = useState(0);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -151,9 +152,7 @@ export default function ChatPage() {
       setCurrentChatId(chat.id);
       setAnalysisResults(null);
       setMessages([]);
-      
-      // Don't update chat history immediately
-      // We'll update it only after a successful analysis
+      setResetTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error creating new chat:', error);
       setError('Failed to create new chat');
@@ -452,7 +451,7 @@ export default function ChatPage() {
       <div className="flex-1 flex flex-col p-4 overflow-y-auto space-y-4">
         {/* Property Calculator */}
         <div className="flex-shrink-0">
-          <PropertyCalculator onCalculate={handleCalculatorSubmit} />
+          <PropertyCalculator onCalculate={handleCalculatorSubmit} resetTrigger={resetTrigger} />
         </div>
 
         {/* Analysis Results */}

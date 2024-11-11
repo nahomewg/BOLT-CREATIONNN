@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const propertyTypes = [
   'Apartment',
@@ -60,7 +60,7 @@ const VALIDATION_RULES = {
   },
 };
 
-export default function PropertyCalculator({ onCalculate }) {
+export default function PropertyCalculator({ onCalculate, resetTrigger = 0 }) {
   const [formData, setFormData] = useState({
     area: '',
     propertyType: '',
@@ -76,6 +76,24 @@ export default function PropertyCalculator({ onCalculate }) {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [touched, setTouched] = useState({});
+
+  const initialFormData = {
+    area: '',
+    propertyType: '',
+    cleaningCost: '',
+    rent: '',
+    livingRooms: '',
+    bedrooms: '',
+    bathrooms: '',
+    nightlyRate: '',
+    occupancyRate: '',
+  };
+
+  const resetForm = () => {
+    setFormData(initialFormData);
+    setErrors({});
+    setTouched({});
+  };
 
   const validateField = (name, value) => {
     const rules = VALIDATION_RULES[name];
@@ -220,6 +238,7 @@ export default function PropertyCalculator({ onCalculate }) {
       };
 
       await onCalculate(calculatedData);
+      resetForm();
     } catch (error) {
       console.error('Calculation error:', error);
       setErrors(prev => ({
@@ -238,6 +257,13 @@ export default function PropertyCalculator({ onCalculate }) {
       : "border-gray-300";
     return `${baseClasses} ${errorClasses}`;
   };
+
+  // Add effect to reset form when resetTrigger changes
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      resetForm();
+    }
+  }, [resetTrigger]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-6">
