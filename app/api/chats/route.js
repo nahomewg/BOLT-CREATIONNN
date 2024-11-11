@@ -53,7 +53,7 @@ export async function POST(request) {
     const chat = await prisma.chat.create({
       data: {
         userId: session.user.id,
-        title: 'New Chat'
+        title: 'New Analysis'
       }
     });
 
