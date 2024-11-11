@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postbuild": "next-sitemap",
     "start": "next start",
     "analyze": "ANALYZE=true npm run build",
-    "postbuild": "next-sitemap",
     "db:local": "./scripts/switch-db.sh local",
     "db:supabase": "./scripts/switch-db.sh supabase",
-    "db:status": "grep DATABASE_URL .env"
+    "db:status": "grep DATABASE_URL .env",
+    "test:db": "node scripts/test-db.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.17.1",
