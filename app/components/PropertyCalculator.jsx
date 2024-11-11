@@ -13,6 +13,53 @@ const propertyTypes = [
   'Resort',
 ];
 
+const VALIDATION_RULES = {
+  area: {
+    required: true,
+    minLength: 3,
+    maxLength: 100,
+  },
+  propertyType: {
+    required: true,
+    validOptions: propertyTypes,
+  },
+  cleaningCost: {
+    required: true,
+    min: 0,
+    max: 1000,
+  },
+  rent: {
+    required: true,
+    min: 100,
+    max: 100000,
+  },
+  livingRooms: {
+    required: true,
+    min: 0,
+    max: 10,
+  },
+  bedrooms: {
+    required: true,
+    min: 1,
+    max: 10,
+  },
+  bathrooms: {
+    required: true,
+    min: 1,
+    max: 10,
+  },
+  nightlyRate: {
+    required: true,
+    min: 10,
+    max: 10000,
+  },
+  occupancyRate: {
+    required: true,
+    min: 1,
+    max: 100,
+  },
+};
+
 export default function PropertyCalculator({ onCalculate }) {
   const [formData, setFormData] = useState({
     area: '',
@@ -26,13 +73,94 @@ export default function PropertyCalculator({ onCalculate }) {
     occupancyRate: '',
   });
 
+  const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touched, setTouched] = useState({});
+
+  const validateField = (name, value) => {
+    const rules = VALIDATION_RULES[name];
+    if (!rules) return '';
+
+    if (rules.required && !value) {
+      return 'This field is required';
+    }
+
+    if (rules.minLength && value.length < rules.minLength) {
+      return `Must be at least ${rules.minLength} characters`;
+    }
+
+    if (rules.maxLength && value.length > rules.maxLength) {
+      return `Must be less than ${rules.maxLength} characters`;
+    }
+
+    if (rules.min !== undefined && Number(value) < rules.min) {
+      return `Must be at least ${rules.min}`;
+    }
+
+    if (rules.max !== undefined && Number(value) > rules.max) {
+      return `Must be less than ${rules.max}`;
+    }
+
+    if (rules.validOptions && !rules.validOptions.includes(value)) {
+      return 'Please select a valid option';
+    }
+
+    return '';
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    Object.keys(formData).forEach(field => {
+      const error = validateField(field, formData[field]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    // Additional cross-field validations
+    if (Number(formData.nightlyRate) <= Number(formData.rent) / 30) {
+      newErrors.nightlyRate = 'Nightly rate should be higher than daily rent cost';
+    }
+
+    if (Number(formData.bedrooms) + Number(formData.livingRooms) > Number(formData.bathrooms) * 3) {
+      newErrors.bathrooms = 'Consider adding more bathrooms for this layout';
+    }
+
+    return newErrors;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    
+    // Prevent non-numeric values for number fields
+    if (e.target.type === 'number' && value !== '') {
+      if (isNaN(value) || value < 0) return;
+    }
+
+    setFormData(prev => ({
       ...prev,
       [name]: value,
+    }));
+
+    // Mark field as touched
+    setTouched(prev => ({
+      ...prev,
+      [name]: true,
+    }));
+
+    // Validate field on change
+    const error = validateField(name, value);
+    setErrors(prev => ({
+      ...prev,
+      [name]: error,
+    }));
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({
+      ...prev,
+      [name]: true,
     }));
   };
 
@@ -40,37 +168,75 @@ export default function PropertyCalculator({ onCalculate }) {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Validate all fields
+    const newErrors = validateForm();
+    setErrors(newErrors);
+
+    // Mark all fields as touched
+    const allTouched = Object.keys(formData).reduce((acc, field) => ({
+      ...acc,
+      [field]: true,
+    }), {});
+    setTouched(allTouched);
+
+    if (Object.keys(newErrors).length > 0) {
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      await onCalculate({
+      const calculatedData = {
         location: formData.area,
         propertyType: formData.propertyType,
         layout: {
-          bedrooms: formData.bedrooms,
-          bathrooms: formData.bathrooms,
-          livingRooms: formData.livingRooms
+          bedrooms: Number(formData.bedrooms),
+          bathrooms: Number(formData.bathrooms),
+          livingRooms: Number(formData.livingRooms)
         },
         financials: {
-          monthlyRent: formData.rent,
-          cleaningCost: formData.cleaningCost,
-          nightlyRate: formData.nightlyRate,
-          occupancyRate: formData.occupancyRate,
-          totalStartupCost: formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000),
-          monthsToRepay: ((formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000)) / (formData.nightlyRate * 30 * (formData.occupancyRate / 100))).toFixed(2),
-          percentDebtRepaidMonthly: (((formData.nightlyRate * 30 * (formData.occupancyRate / 100) - formData.rent) / (formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000))) * 100).toFixed(2),
-          annualROI: (((formData.nightlyRate * 30 * (formData.occupancyRate / 100) - formData.rent) * 12) / (formData.rent * 2 + (formData.bedrooms * 4000) + (formData.bathrooms * 1000) + (formData.livingRooms * 2000)) * 100).toFixed(2),
-          netAnnualIncome: ((formData.nightlyRate * 30 * (formData.occupancyRate / 100) - formData.rent) * 12).toFixed(2),
-          netMonthlyIncome: (formData.nightlyRate * 30 * (formData.occupancyRate / 100) - formData.rent).toFixed(2)
+          monthlyRent: Number(formData.rent),
+          cleaningCost: Number(formData.cleaningCost),
+          nightlyRate: Number(formData.nightlyRate),
+          occupancyRate: Number(formData.occupancyRate),
+          totalStartupCost: Number(formData.rent) * 2 + (Number(formData.bedrooms) * 4000) + (Number(formData.bathrooms) * 1000) + (Number(formData.livingRooms) * 2000),
+          monthsToRepay: ((Number(formData.rent) * 2 + (Number(formData.bedrooms) * 4000) + (Number(formData.bathrooms) * 1000) + (Number(formData.livingRooms) * 2000)) / (Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100))).toFixed(2),
+          percentDebtRepaidMonthly: (((Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100) - Number(formData.rent)) / (Number(formData.rent) * 2 + (Number(formData.bedrooms) * 4000) + (Number(formData.bathrooms) * 1000) + (Number(formData.livingRooms) * 2000))) * 100).toFixed(2),
+          annualROI: (((Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100) - Number(formData.rent)) * 12) / (Number(formData.rent) * 2 + (Number(formData.bedrooms) * 4000) + (Number(formData.bathrooms) * 1000) + (Number(formData.livingRooms) * 2000)) * 100).toFixed(2),
+          netAnnualIncome: ((Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100) - Number(formData.rent)) * 12).toFixed(2),
+          netMonthlyIncome: (Number(formData.nightlyRate) * 30 * (Number(formData.occupancyRate) / 100) - Number(formData.rent)).toFixed(2)
         }
-      });
+      };
+
+      await onCalculate(calculatedData);
+    } catch (error) {
+      console.error('Calculation error:', error);
+      setErrors(prev => ({
+        ...prev,
+        submit: 'Failed to process calculation. Please try again.'
+      }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const getInputClassName = (fieldName) => {
+    const baseClasses = "w-full p-2 border rounded";
+    const errorClasses = touched[fieldName] && errors[fieldName] 
+      ? "border-red-500 bg-red-50" 
+      : "border-gray-300";
+    return `${baseClasses} ${errorClasses}`;
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-6">
       <h2 className="text-2xl font-bold mb-4">Property Analysis Calculator</h2>
-      <form onSubmit={handleSubmit}>
+      {errors.submit && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {errors.submit}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} noValidate>
+        {/* Location field */}
         <div className="mb-4">
           <label htmlFor="area" className="block text-sm font-medium text-gray-700 mb-1">
             Location/Area
@@ -82,12 +248,16 @@ export default function PropertyCalculator({ onCalculate }) {
             placeholder="e.g., Downtown Seattle, WA"
             value={formData.area}
             onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            required
+            onBlur={handleBlur}
+            className={getInputClassName('area')}
           />
+          {touched.area && errors.area && (
+            <p className="mt-1 text-sm text-red-600">{errors.area}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
+          {/* Property Type */}
           <div>
             <label htmlFor="propertyType" className="block text-sm font-medium text-gray-700 mb-1">
               Property Type
@@ -97,16 +267,20 @@ export default function PropertyCalculator({ onCalculate }) {
               name="propertyType"
               value={formData.propertyType}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-              required
+              onBlur={handleBlur}
+              className={getInputClassName('propertyType')}
             >
               <option value="">Select Type</option>
               {propertyTypes.map((type) => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
+            {touched.propertyType && errors.propertyType && (
+              <p className="mt-1 text-sm text-red-600">{errors.propertyType}</p>
+            )}
           </div>
 
+          {/* Cleaning Cost */}
           <div>
             <label htmlFor="cleaningCost" className="block text-sm font-medium text-gray-700 mb-1">
               Cleaning Cost
@@ -118,13 +292,17 @@ export default function PropertyCalculator({ onCalculate }) {
               placeholder="$ per cleaning"
               value={formData.cleaningCost}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              onBlur={handleBlur}
+              className={getInputClassName('cleaningCost')}
               min="0"
               step="5"
-              required
             />
+            {touched.cleaningCost && errors.cleaningCost && (
+              <p className="mt-1 text-sm text-red-600">{errors.cleaningCost}</p>
+            )}
           </div>
 
+          {/* Monthly Rent */}
           <div>
             <label htmlFor="rent" className="block text-sm font-medium text-gray-700 mb-1">
               Monthly Rent
@@ -136,13 +314,17 @@ export default function PropertyCalculator({ onCalculate }) {
               placeholder="$ per month"
               value={formData.rent}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              onBlur={handleBlur}
+              className={getInputClassName('rent')}
               min="0"
               step="50"
-              required
             />
+            {touched.rent && errors.rent && (
+              <p className="mt-1 text-sm text-red-600">{errors.rent}</p>
+            )}
           </div>
 
+          {/* Living Rooms */}
           <div>
             <label htmlFor="livingRooms" className="block text-sm font-medium text-gray-700 mb-1">
               Living Rooms
@@ -154,14 +336,18 @@ export default function PropertyCalculator({ onCalculate }) {
               placeholder="Number of living rooms"
               value={formData.livingRooms}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              onBlur={handleBlur}
+              className={getInputClassName('livingRooms')}
               min="0"
               max="10"
               step="1"
-              required
             />
+            {touched.livingRooms && errors.livingRooms && (
+              <p className="mt-1 text-sm text-red-600">{errors.livingRooms}</p>
+            )}
           </div>
 
+          {/* Bedrooms */}
           <div>
             <label htmlFor="bedrooms" className="block text-sm font-medium text-gray-700 mb-1">
               Bedrooms
@@ -173,14 +359,18 @@ export default function PropertyCalculator({ onCalculate }) {
               placeholder="Number of bedrooms"
               value={formData.bedrooms}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              onBlur={handleBlur}
+              className={getInputClassName('bedrooms')}
               min="0"
               max="10"
               step="1"
-              required
             />
+            {touched.bedrooms && errors.bedrooms && (
+              <p className="mt-1 text-sm text-red-600">{errors.bedrooms}</p>
+            )}
           </div>
 
+          {/* Bathrooms */}
           <div>
             <label htmlFor="bathrooms" className="block text-sm font-medium text-gray-700 mb-1">
               Bathrooms
@@ -192,14 +382,18 @@ export default function PropertyCalculator({ onCalculate }) {
               placeholder="Number of bathrooms"
               value={formData.bathrooms}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              onBlur={handleBlur}
+              className={getInputClassName('bathrooms')}
               min="0"
               max="10"
               step="1"
-              required
             />
+            {touched.bathrooms && errors.bathrooms && (
+              <p className="mt-1 text-sm text-red-600">{errors.bathrooms}</p>
+            )}
           </div>
 
+          {/* Nightly Rate */}
           <div>
             <label htmlFor="nightlyRate" className="block text-sm font-medium text-gray-700 mb-1">
               Nightly Rate
@@ -211,13 +405,17 @@ export default function PropertyCalculator({ onCalculate }) {
               placeholder="$ per night"
               value={formData.nightlyRate}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              onBlur={handleBlur}
+              className={getInputClassName('nightlyRate')}
               min="0"
               step="5"
-              required
             />
+            {touched.nightlyRate && errors.nightlyRate && (
+              <p className="mt-1 text-sm text-red-600">{errors.nightlyRate}</p>
+            )}
           </div>
 
+          {/* Occupancy Rate */}
           <div>
             <label htmlFor="occupancyRate" className="block text-sm font-medium text-gray-700 mb-1">
               Occupancy Rate
@@ -229,19 +427,22 @@ export default function PropertyCalculator({ onCalculate }) {
               placeholder="Expected occupancy %"
               value={formData.occupancyRate}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              onBlur={handleBlur}
+              className={getInputClassName('occupancyRate')}
               min="0"
               max="100"
               step="1"
-              required
             />
+            {touched.occupancyRate && errors.occupancyRate && (
+              <p className="mt-1 text-sm text-red-600">{errors.occupancyRate}</p>
+            )}
           </div>
         </div>
 
         <div className="flex justify-center">
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || Object.keys(errors).length > 0}
             className="w-1/2 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
