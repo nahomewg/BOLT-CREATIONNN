@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
@@ -386,6 +386,13 @@ export default function ChatPage() {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut({ 
+      redirect: true,
+      callbackUrl: '/login'
+    });
+  };
+
   if (status === 'loading') {
     return <div>Loading...</div>;
   }
@@ -444,6 +451,27 @@ export default function ChatPage() {
               )}
             </div>
           ))}
+        </div>
+
+        <div className="p-4 flex justify-center">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-6 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-5 w-5" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Logout
+          </button>
         </div>
       </div>
 
