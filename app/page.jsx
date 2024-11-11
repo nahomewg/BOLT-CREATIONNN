@@ -99,7 +99,7 @@ export default function ChatPage() {
       }
 
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -159,7 +159,7 @@ export default function ChatPage() {
       if (!response.ok) throw new Error('Failed to rename chat');
 
       // Update chats list
-      setChats(chats.map(chat => 
+      setChats(chats.map(chat =>
         chat.id === chatId ? { ...chat, title: editingTitle } : chat
       ));
       setEditingChatId(null);
@@ -269,9 +269,8 @@ export default function ChatPage() {
     return (
       <div className="relative group">
         <div
-          className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-700 ${
-            currentChatId === chat.id ? 'bg-gray-700' : ''
-          }`}
+          className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-700 ${currentChatId === chat.id ? 'bg-gray-700' : ''
+            }`}
           onClick={() => onSelect()}
         >
           <div className="flex-1 min-w-0"> {/* Add min-w-0 to allow truncation */}
@@ -342,9 +341,9 @@ export default function ChatPage() {
       const response = await fetch(`/api/chats/${chatId}/export`, {
         method: 'GET',
       });
-      
+
       if (!response.ok) throw new Error('Failed to export chat');
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -379,7 +378,7 @@ export default function ChatPage() {
             New Chat
           </button>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto">
           {chats.map((chat) => (
             <div key={chat.id} className="px-4 mb-2">
@@ -426,7 +425,7 @@ export default function ChatPage() {
         <div className="flex-shrink-0">
           <PropertyCalculator onCalculate={handleCalculatorSubmit} />
         </div>
-        
+
         {/* Analysis Results */}
         {analysisResults && (
           <div className="flex-shrink-0">
@@ -437,21 +436,36 @@ export default function ChatPage() {
         {/* Chat Area */}
         <div className="flex-1 flex flex-col min-h-[500px]">
           <div className="flex-1 bg-white rounded-lg shadow mb-4 p-4 overflow-y-auto">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`mb-4 p-3 rounded-lg ${
-                  message.role === 'user'
-                    ? 'bg-blue-100 ml-8'
-                    : 'bg-gray-100 mr-8'
-                }`}
-              >
-                <div className="font-semibold mb-1">
-                  {message.role === 'user' ? 'You' : 'Claude'}
+            {messages.length > 0 ? (
+              messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`mb-4 p-3 rounded-lg ${message.role === 'user'
+                      ? 'bg-blue-100 ml-8'
+                      : 'bg-gray-100 mr-8'
+                    }`}
+                >
+                  <div className="font-semibold mb-1">
+                    {message.role === 'user' ? 'You' : 'Claude'}
+                  </div>
+                  <div className="whitespace-pre-wrap">{message.content}</div>
                 </div>
-                <div className="whitespace-pre-wrap">{message.content}</div>
+              ))
+            ) : analysisResults ? (
+              <div className="text-gray-600 text-center p-4">
+                <p className="mb-2">Analysis complete! Have any questions about the results?</p>
+                <p>Feel free to ask about:</p>
+                <div className="flex justify-center mt-2">
+                  <ul className="list-disc pl-14 space-y-1 inline-block">
+                    <li className="text-left">Location strategy</li>
+                    <li className="text-left">Revenue projections</li>
+                    <li className="text-left">Operating costs</li>
+                    <li className="text-left">Market competition</li>
+                    <li className="text-left">Optimization suggestions</li>
+                  </ul>
+                </div>
               </div>
-            ))}
+            ) : null}
 
             {isLoading && (
               <div className="text-gray-500 italic">Claude is thinking...</div>
