@@ -4,17 +4,31 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "build": "prisma generate && next build",
+    "postbuild": "next-sitemap",
+    "start": "next start",
+    "analyze": "ANALYZE=true npm run build",
+    "db:local": "./scripts/switch-db.sh local",
+    "db:supabase": "./scripts/switch-db.sh supabase",
+    "db:status": "grep DATABASE_URL .env",
+    "test:db": "node scripts/test-db.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.17.1",
+    "@auth/prisma-adapter": "^1.0.12",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "jspdf": "^2.5.2",
+    "next": "^14.2.17",
+    "next-auth": "^4.24.5",
     "@netlify/plugin-nextjs": "latest",
     "next": "^14.2.17",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.0.3",
+    "prisma": "^5.22.0"
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14"

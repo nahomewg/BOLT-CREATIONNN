@@ -38,3 +38,8 @@ yarn-error.log*
 
 # Local Netlify folder
 .netlify
+
+# Prisma
+prisma/.env
+*.db
+migrations/
