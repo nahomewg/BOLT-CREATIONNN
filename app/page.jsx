@@ -1,7 +1,15 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
+
+const PropertyCalculator = dynamic(() => import('./components/PropertyCalculator'), {
+  loading: () => <div>Loading calculator...</div>
+});
+
+const AnalysisResults = dynamic(() => import('./components/AnalysisResults'), {
+  loading: () => <div>Loading results...</div>
+});
 
 export default function ChatPage() {
   const [inputMessage, setInputMessage] = useState('');
