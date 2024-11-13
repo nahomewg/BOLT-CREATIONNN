@@ -145,52 +145,56 @@ export default function AnalysisResults({ results }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-transparent border-gray-500" style={{ border: '1px solid rgb(107, 114, 128)', borderRadius: '0.75rem', padding: '1.5rem' }}>
       {!results ? (
-        <div className="text-center text-red-600">No analysis results available</div>
+        <div className="text-center" style={{ color: '#ff0000' }}>No analysis results available</div>
       ) : (
         <>
-          <h2 className="text-2xl font-bold mb-4">Property Analysis Results</h2>
+          <h2 className="text-2xl font-bold mb-4 text-center" style={{ color: '#ffffff' }}>Property Analysis Results</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="p-4 bg-gray-50 rounded">
-              <h3 className="font-semibold mb-2">Total Startup Cost</h3>
-              <p className="text-lg">${formatValue(results.totalStartupCost)}</p>
+            <div className="p-4 bg-transparent rounded">
+              <h3 className="font-semibold mb-2" style={{ color: '#ffffff' }}>Total Startup Cost</h3>
+              <p className="text-lg"><span style={{ color: '#D35400' }}>$</span><span style={{ color: '#ffffff' }}>{formatValue(results.totalStartupCost)}</span></p>
             </div>
-            <div className="p-4 bg-gray-50 rounded">
-              <h3 className="font-semibold mb-2">Months to Repay</h3>
-              <p className="text-lg">{formatValue(results.monthsToRepay)} months</p>
+            <div className="p-4 bg-transparent rounded">
+              <h3 className="font-semibold mb-2" style={{ color: '#ffffff' }}>Months to Repay</h3>
+              <p className="text-lg" style={{ color: '#ffffff' }}>{formatValue(results.monthsToRepay)} months</p>
             </div>
-            <div className="p-4 bg-gray-50 rounded">
-              <h3 className="font-semibold mb-2">Percent of Debt Repaid Monthly</h3>
-              <p className="text-lg">{formatValue(results.percentDebtRepaidMonthly)}%</p>
+            <div className="p-4 bg-transparent rounded">
+              <h3 className="font-semibold mb-2" style={{ color: '#ffffff' }}>Percent of Debt Repaid Monthly</h3>
+              <p className="text-lg"><span style={{ color: '#ffffff' }}>{formatValue(results.percentDebtRepaidMonthly)}</span><span style={{ color: '#D35400' }}>%</span></p>
             </div>
-            <div className="p-4 bg-gray-50 rounded">
-              <h3 className="font-semibold mb-2">Annual ROI After Debt Repaid</h3>
-              <p className="text-lg">{formatValue(results.annualROI)}%</p>
+            <div className="p-4 bg-transparent rounded">
+              <h3 className="font-semibold mb-2" style={{ color: '#ffffff' }}>Annual ROI After Debt Repaid</h3>
+              <p className="text-lg"><span style={{ color: '#ffffff' }}>{formatValue(results.annualROI)}</span><span style={{ color: '#D35400' }}>%</span></p>
             </div>
-            <div className="p-4 bg-gray-50 rounded">
-              <h3 className="font-semibold mb-2">Net Annual Income After Debt Repaid</h3>
-              <p className="text-lg">${formatValue(results.netAnnualIncome)}</p>
+            <div className="p-4 bg-transparent rounded">
+              <h3 className="font-semibold mb-2" style={{ color: '#ffffff' }}>Net Annual Income After Debt Repaid</h3>
+              <p className="text-lg"><span style={{ color: '#D35400' }}>$</span><span style={{ color: '#ffffff' }}>{formatValue(results.netAnnualIncome)}</span></p>
             </div>
-            <div className="p-4 bg-gray-50 rounded">
-              <h3 className="font-semibold mb-2">Net Monthly Income After Debt Repaid</h3>
-              <p className="text-lg">${formatValue(results.netMonthlyIncome)}</p>
+            <div className="p-4 bg-transparent rounded">
+              <h3 className="font-semibold mb-2" style={{ color: '#ffffff' }}>Net Monthly Income After Debt Repaid</h3>
+              <p className="text-lg"><span style={{ color: '#D35400' }}>$</span><span style={{ color: '#ffffff' }}>{formatValue(results.netMonthlyIncome)}</span></p>
             </div>
           </div>
 
           {results.aiAnalysis && (
-            <div className="mt-6 p-4 bg-gray-50 rounded">
-              <h3 className="font-semibold mb-2">AI Analysis</h3>
+            <div className="mt-6 p-4 bg-transparent rounded">
+              <h3 className="font-semibold mb-2" style={{ color: '#ffffff' }}>AI Analysis</h3>
               <div className="prose max-w-none">
-                <p className="whitespace-pre-wrap">{results.aiAnalysis}</p>
+                <p className="whitespace-pre-wrap" style={{ color: '#ffffff' }}>{results.aiAnalysis}</p>
               </div>
             </div>
           )}
 
-          <div className="mt-6">
+          <div className="mt-6 flex justify-center">
             <button
               onClick={handleExportPDF}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded hover:bg-[#A04000] transition-colors disabled:cursor-not-allowed"
+              style={{ 
+                backgroundColor: results ? '#D35400' : 'rgba(211, 84, 0, 0.5)',
+                color: '#ffffff'
+              }}
               disabled={!results}
             >
               Export PDF
